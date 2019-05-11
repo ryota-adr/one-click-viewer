@@ -1,5 +1,5 @@
 <?php
-$autoloader = 'file:///C:/xampp/htdocs/TestPHP/myapp/laravel58/vendor/autoload.php';
+$autoloader = '';
 
 if (file_exists($autoloader)) {
     try {

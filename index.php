@@ -186,7 +186,7 @@ if (isset($match_doc[0])) {
         preg_match_all('/@\w+? +(\\\?([A-Z][a-z]+\\\?)+)/', $doc, $match_classes_with_ns);
         if (isset($match_classes_with_ns[1])) {
             $classes_with_ns = $match_classes_with_ns[1];
-            #sdump($doc, $match_classes_with_ns);
+            
             $replace_doc = $doc;
             foreach ($classes_with_ns as $class_with_ns) {
                 try {
@@ -268,7 +268,6 @@ echo $code;
         cursor: pointer;
     }
 </style>
-<?php dump_css()?>
 <!-- copy dir path -->
 <script>
     var dir = document.querySelector("span.dir");

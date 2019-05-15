@@ -1,6 +1,7 @@
+## 説明
 1クリックで外部クラスのコードを表示できるPHPコードビューワー
 
-使い方
+## 使い方
 
 ```php:index.php
 $autoloader = '\vendor\autoloader.php';

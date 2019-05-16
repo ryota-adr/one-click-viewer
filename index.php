@@ -17,12 +17,17 @@ $url = (empty($_SERVER['HTTPS']) ? 'http://' : 'https://').$_SERVER["HTTP_HOST"]
 
 // get code from namespace
 if (isset($_GET['ns'])) {
-    $namespace = $_GET['ns'];
+    $ns_or_path = $_GET['ns'];
     try {
-        $this_file = (new ReflectionClass($namespace))->getFileName();
-        $code = @file_get_contents($this_file);
+        if (file_exists($ns_or_path)) { //file path
+            $this_file = trim($ns_or_path);
+            $code = file_get_contents($this_file);
+        } else { //namespace
+            $this_file = (new ReflectionClass(trim($ns_or_path)))->getFileName();
+            $code = @file_get_contents($this_file);
+        }
 
-        preg_match('/^(class|interface|abstract class|trait) (\w+) /m', $code, $match_class);
+        preg_match('/^(class|interface|abstract class|trait) (\w+)/m', $code, $match_class);
         if (isset($match_class[2])) {
             $this_class = $match_class[2];
         }
@@ -41,7 +46,7 @@ if (isset($_GET['ns'])) {
 ?>
 <div class="namespace">
     <form action="<?php basename(__FILE__) ?>" method="GET">
-        <input type="text" name="ns" value="<?php if (isset($namespace)) echo $namespace ?>" size="60" class="ns">
+        <input type="text" name="ns" value="<?php if (isset($this_ns) && isset($this_class)) echo $this_ns.'\\'.$this_class ?>" size="60" class="ns">
         <button>SHOW</button>
     </form>
 </div>
@@ -199,6 +204,10 @@ if (isset($match_funcs_str[0])) {
     foreach ($funcs_str as $func_str) {
         preg_match_all('/\\\?([A-Z][a-z]+\\\?)+/', $func_str, $match_func_classes);
         $func_classes = array_unique($match_func_classes[0]);
+        $idx = array_search($this_class, $func_classes);
+        if ($idx !== false) {
+            array_splice($func_classes, $idx, 1);
+        }
 
         $replace_func = $func_str;
         foreach ($func_classes as $func_class) {
@@ -219,6 +228,13 @@ if (isset($match_funcs_str[0])) {
     }
 }
 
+//replace func to <span id="funcName">funcName</span>
+$code = preg_replace('/(public|protected|private)(.+?)(function )(\w+)(\()/m', '$1$2$3<span id="$4">$4</span>$5', $code);
+
+$url_with_query =  (empty($_SERVER['HTTPS']) ? 'http://' : 'https://').$_SERVER["HTTP_HOST"] . $_SERVER['REQUEST_URI'];
+
+preg_match_all('/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::)(\w+?)(\()/', $code, $match_funcs);
+$code = preg_replace('/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::)(\w+?)(\()/', "$1<a href=\"$url_with_query#$2\">$2</a>$3", $code);
 
 output:
 

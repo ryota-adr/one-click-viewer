@@ -228,8 +228,8 @@ if (isset($match_funcs_str[0])) {
     }
 }
 
-//replace func to <span id="funcName">funcName</span>
-$code = preg_replace('/(public|protected|private)(.+?)(function )(\w+)(\()/m', '$1$2$3<span id="$4">$4</span>$5', $code);
+//add <span id="funcName"></span>
+$code = preg_replace('/([\r\n]+?)^    (public|protected|private)(.+?)(function )(\w+)(\()/m', '<span id="$5"></span>    $1    $2$3$4$5$6', $code);
 
 $url_with_query =  (empty($_SERVER['HTTPS']) ? 'http://' : 'https://').$_SERVER["HTTP_HOST"] . $_SERVER['REQUEST_URI'];
 

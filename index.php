@@ -228,13 +228,45 @@ if (isset($match_funcs_str[0])) {
     }
 }
 
-//add <span id="funcName"></span>
-$code = preg_replace('/([\r\n]+?)^    (public|protected|private)(.+?)(function )(\w+)(\()/m', '<span id="$5"></span>    $1    $2$3$4$5$6', $code);
+//add <span id="funcName"></span> 
+//and replace ($this->|Class::)func() to <a href="thisUri#funcName>($this->|Class::)func()</a>
+$code = preg_replace(
+    '/([\r\n]+?)^    (public|protected|private) (function )(\w+)(\()/m',
+    '<span id="$4"> </span>    $1    $2 $3$4$5',
+    $code
+);
 
 $url_with_query =  (empty($_SERVER['HTTPS']) ? 'http://' : 'https://').$_SERVER["HTTP_HOST"] . $_SERVER['REQUEST_URI'];
 
-preg_match_all('/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::)(\w+?)(\()/', $code, $match_funcs);
-$code = preg_replace('/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::)(\w+?)(\()/', "$1<a href=\"$url_with_query#$2\">$2</a>$3", $code);
+preg_match_all('/^ {4}(public|protected|private)(.+?)(function )(\w+)(\()/m', $code, $match_func_names);
+$func_names = $match_func_names[4];
+
+foreach ($func_names as $func_name) {
+    $code = preg_replace(
+        '/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::)'.$func_name.'(\()/',
+        "$1<a href=\"$url_with_query#$func_name\">$func_name</a>$2",
+        $code
+    );
+}
+
+//add <span id="propName"></span> 
+//and replace ($this->|Class::$)prot to <a href="thisUri#propName>($this->|Class::$)prop</a>
+$code = preg_replace(
+    '/([\r\n]+?)^ {4}(public|protected|private) (\$)(\w+?)( |;)/m', 
+    '<span id="$4"> </span>$1    $2 $3$4$5',
+    $code
+);
+
+preg_match_all('/^ {4}(public|protected|private) (\$)(\w+?)( |;)/m', $code, $match_prop_names);
+$prop_names = $match_prop_names[3];
+
+foreach ($prop_names as $prop_name) {
+    $code = preg_replace(
+        '/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::\$)'.$prop_name.'/',
+        "$1<a href=\"$url_with_query#$prop_name\">$prop_name</a>",
+        $code
+    );
+}
 
 output:
 

@@ -212,14 +212,14 @@ if (isset($match_funcs_str[0])) {
         $replace_func = $func_str;
         foreach ($func_classes as $func_class) {
             if (isset($class_arr[$func_class])) {
-                $replace_func = preg_replace('/(?<!\w\\\)'.$func_class.'( |\(|\)|;|::)/', "<a href=\"$url?ns=$class_arr[$func_class]\">$func_class</a>$1", $replace_func);
+                $replace_func = preg_replace('/(?<![\w\\\])'.$func_class.'( |\(|\)|;|::)/', "<a href=\"$url?ns=$class_arr[$func_class]\">$func_class</a>$1", $replace_func);
             } elseif (isset($alias_ns[$func_class])) {
-                $replace_func = preg_replace('/(?<!\w\\\)'.$func_class.'( |\(|\)|;|::)/', "<a href=\"$url?ns=$alias_ns[$func_class]\">$func_class</a>$1", $replace_func);
+                $replace_func = preg_replace('/(?<![\w\\\])'.$func_class.'( |\(|\)|;|::)/', "<a href=\"$url?ns=$alias_ns[$func_class]\">$func_class</a>$1", $replace_func);
             } else {
                 try {
                     $func_class_with_ns = $this_ns.'\\'.trim($func_class, '\\');
                     if ((new ReflectionClass($func_class_with_ns))->getFileName()) {
-                        $replace_func = preg_replace('/'.preg_quote($func_class).'( |\(|\)|;|::)/', "<a href=\"$url?ns=$func_class_with_ns\">$func_class</a>$1", $replace_func);
+                        $replace_func = preg_replace('/(?<![\w\\\])'.preg_quote($func_class).'( |\(|\)|;|::)/', "<a href=\"$url?ns=$func_class_with_ns\">$func_class</a>$1", $replace_func);
                     }
                 } catch (Exception $e) {}
             }

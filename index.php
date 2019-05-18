@@ -231,18 +231,23 @@ if (isset($match_funcs_str[0])) {
     }
 }
 
-//add <span id="funcName"></span> 
+//add <span id="funcName"> </span> 
 //and replace ($this->|Class::)func() to <a href="thisUri#funcName>($this->|Class::)func()</a>
-$code = preg_replace(
-    '/([\r\n]+?)^    (public|protected|private) (function )(\w+)(\()/m',
-    '<span id="$4"> </span>    $1    $2 $3$4$5',
+$code = preg_replace( //with doc
+    '/([\r\n])(^ {4}\/\*\*)([\s\S]+?^ {5}?\*\/[\r\n]+^ {4})(abstract )?(public|protected|private) (function) (\w+)(\()/m',
+    '<span id="$7"> </span>$1$2$3$4$5 $6 $7$8',
+    $code
+);
+$code = preg_replace( //without doc
+    '/(?<!\*\/)([\r\n])(^ {4})(abstract )?(public|protected|private) (function) (\w+)(\()/m',
+    '<span id="$6"> </span>$1$2$3$4 $5 $6$7',
     $code
 );
 
 $url_with_query =  (empty($_SERVER['HTTPS']) ? 'http://' : 'https://').$_SERVER["HTTP_HOST"] . $_SERVER['REQUEST_URI'];
 
-preg_match_all('/^ {4}(public|protected|private)(.+?)(function )(\w+)(\()/m', $code, $match_func_names);
-$func_names = $match_func_names[4];
+preg_match_all('/^ {4}(abstract )?(public|protected|private)(.+?)(function )(\w+)(\()/m', $code, $match_func_names);
+$func_names = $match_func_names[5];
 
 foreach ($func_names as $func_name) {
     $code = preg_replace(
@@ -273,9 +278,10 @@ foreach ($prop_names as $prop_name) {
 
 output:
 
-$font_color = "#515151";
+$font_color = '#515151';
+$font_size = '20px';
 ?>
-<pre style="overflow-wrap: break-word; white-space: pre-wrap; font-family: Arial, Helvetica, sans-serif; font-size: 20px; color: <?php echo $font_color ?>; margin-top: 2em;">
+<pre style="overflow-wrap: break-word; white-space: pre-wrap; font-family: Arial, Helvetica, sans-serif; font-size: $font_size; color: <?php echo $font_color ?>; margin-top: 2em;">
 <div>
 <?php
 //print dir path

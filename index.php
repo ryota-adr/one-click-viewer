@@ -46,7 +46,7 @@ if (isset($_GET['ns'])) {
 ?>
 <div class="namespace">
     <form action="<?php basename(__FILE__) ?>" method="GET">
-        <input type="text" name="ns" value="<?php if (isset($this_ns) && isset($this_class)) echo $this_ns.'\\'.$this_class ?>" size="60" class="ns">
+        <input type="text" name="ns" value="<?php if (isset($this_ns) && isset($this_class)) { echo $this_ns.'\\'.$this_class; } else { echo $ns_or_path; } ?>" size="60" class="ns">
         <button>SHOW</button>
     </form>
 </div>
@@ -60,56 +60,59 @@ $code = htmlspecialchars($code);
 
 //replace uses    
 preg_match('/namespace[\s][A-Za-z\\\]+?;[\s\S]+?(class|interface|abstract class|trait)/', $code, $match_uses_str);
-$uses_str = $match_uses_str[0];
 
-preg_match_all('/use ([a-z\\\]+?);/i', $uses_str, $match_uses);
-$classes_with_ns = $match_uses[1];
-$replace_uses_str = $uses_str;
-$class_arr = [];
-foreach ($classes_with_ns as $class_with_ns) {
-    try {
-        $path = (new ReflectionClass($class_with_ns))->getFileName();
-        if ($path) {
-            $split = explode('\\', $class_with_ns);
-            $end = end($split);
-            $class_arr[$end] = $class_with_ns;
+if (isset($match_uses_str[0])) {
+    $uses_str = $match_uses_str[0];
 
-            $replace_uses_str = preg_replace('/'.preg_quote($class_with_ns).';/', "<a href=\"$url?ns=$class_with_ns\">$class_with_ns</a>;", $replace_uses_str);
-        }
-    } catch (Exception $e) {}
+    preg_match_all('/use ([a-z\\\]+?);/i', $uses_str, $match_uses);
+    $classes_with_ns = $match_uses[1];
+    $replace_uses_str = $uses_str;
+    $class_arr = [];
+    foreach ($classes_with_ns as $class_with_ns) {
+        try {
+            $path = (new ReflectionClass($class_with_ns))->getFileName();
+            if ($path) {
+                $split = explode('\\', $class_with_ns);
+                $end = end($split);
+                $class_arr[$end] = $class_with_ns;
+
+                $replace_uses_str = preg_replace('/'.preg_quote($class_with_ns).';/', "<a href=\"$url? ns=$class_with_ns\">$class_with_ns</a>;", $replace_uses_str);
+            }
+        } catch (Exception $e) {}
+    }
+    $code = str_replace($uses_str, $replace_uses_str, $code);
+
+    //replace uses with as
+    preg_match_all('/use (([A-Za-z\\\]+?) as ([A-Za-z\\\]+?));/', $replace_uses_str, $match_use_as);
+
+    $all_ns_alias_arr = [];
+    for ($i = 0; $i < count($match_use_as[0]); $i++) {
+        $all_ns_alias_arr[] = array_column($match_use_as, $i);
+    }
+    $all_ns_alias_arr = array_map(function($arr) {
+        return [
+            "all" => $arr[1],
+            "ns" => $arr[2],
+            "alias" => $arr[3]
+        ];
+    } ,$all_ns_alias_arr);
+
+    $alias_ns = array_combine(
+        array_column($all_ns_alias_arr, 'alias'), 
+        array_column($all_ns_alias_arr, 'ns')
+    );
+    $replace_use_with_as_str = $replace_uses_str;
+
+    foreach ($all_ns_alias_arr as $all_ns_alias) {
+        try {
+            $path = (new ReflectionClass($all_ns_alias['ns']))->getFileName();
+            if ($path) {
+                $replace_use_with_as_str = str_replace($all_ns_alias['all'], "<a href=\"$url?  ns=$all_ns_alias[ns]\">$all_ns_alias[all]</a>", $replace_use_with_as_str);
+            }
+        } catch (Exception $e) {}
+    }
+    $code = str_replace($replace_uses_str, $replace_use_with_as_str, $code);
 }
-$code = str_replace($uses_str, $replace_uses_str, $code);
-
-//replace uses with as
-preg_match_all('/use (([A-Za-z\\\]+?) as ([A-Za-z\\\]+?));/', $replace_uses_str, $match_use_as);
-
-$all_ns_alias_arr = [];
-for ($i = 0; $i < count($match_use_as[0]); $i++) {
-    $all_ns_alias_arr[] = array_column($match_use_as, $i);
-}
-$all_ns_alias_arr = array_map(function($arr) {
-    return [
-        "all" => $arr[1],
-        "ns" => $arr[2],
-        "alias" => $arr[3]
-    ];
-} ,$all_ns_alias_arr);
-
-$alias_ns = array_combine(
-    array_column($all_ns_alias_arr, 'alias'), 
-    array_column($all_ns_alias_arr, 'ns')
-);
-$replace_use_with_as_str = $replace_uses_str;
-
-foreach ($all_ns_alias_arr as $all_ns_alias) {
-    try {
-        $path = (new ReflectionClass($all_ns_alias['ns']))->getFileName();
-        if ($path) {
-            $replace_use_with_as_str = str_replace($all_ns_alias['all'], "<a href=\"$url?ns=$all_ns_alias[ns]\">$all_ns_alias[all]</a>", $replace_use_with_as_str);
-        }
-    } catch (Exception $e) {}
-}
-$code = str_replace($replace_uses_str, $replace_use_with_as_str, $code);
 
 //replace extends and implements
 preg_match('/^(class|interface|abstract class|trait) \w+? (extends|implements) .+[\r\n]/m', $code, $match_ext_imp);
@@ -133,7 +136,7 @@ if (!empty($match_ext_imp[0])) {
                 try {
                     $ext_imp_with_ns = $this_ns.'\\'.trim($ext_imp, '\\');
                     if ((new ReflectionClass($this_ns.'\\'.trim($ext_imp, '\\')))->getFileName()) {
-                        $replace_ext_imp_str = str_replace($ext_imp, "<a href=\"$url?ns=$ext_imp_with_ns\">$ext_imp</a>", $replace_ext_imp_str);
+                        $replace_ext_imp_str = str_replace(" $ext_imp", " <a href=\"$url?ns=$ext_imp_with_ns\">$ext_imp</a>", $replace_ext_imp_str);
                     }
                 } catch (Exception $e) {}
             }

@@ -231,16 +231,16 @@ if (isset($match_funcs_str[0])) {
     }
 }
 
-//add <span id="funcName"> </span> 
+//add <span id="funcName or propName"> </span> 
 //and replace ($this->|Class::)func() to <a href="thisUri#funcName>($this->|Class::)func()</a>
 $code = preg_replace( //with doc
-    '/([\r\n])(^ {4}\/\*\*)([\s\S]+?^ {5}?\*\/[\r\n]+^ {4})(abstract )?(public|protected|private) (function) (\w+)(\()/m',
-    '<span id="$7"> </span>$1$2$3$4$5 $6 $7$8',
+    '/([\r\n])(^ {4}\/\*\*)([\s\S]+?^ {5}?\*\/[\r\n]+^ {4})(abstract )?(const|public|protected|private) (static )?(function )?(\$)?(\w+)/m',
+    '<span id="$9"> </span>$1$2$3$4$5 $6$7$8$9',
     $code
 );
 $code = preg_replace( //without doc
-    '/(?<!\*\/)([\r\n])(^ {4})(abstract )?(public|protected|private) (function) (\w+)(\()/m',
-    '<span id="$6"> </span>$1$2$3$4 $5 $6$7',
+    '/(?<!\*\/)([\r\n])(^ {4})(abstract )?(const|public|protected|private) (static )?(function )?(\$)?(\w+)/m',
+    '<span id="$8"> </span>$1$2$3$4 $5$6$7$8',
     $code
 );
 
@@ -257,24 +257,24 @@ foreach ($func_names as $func_name) {
     );
 }
 
-//add <span id="propName"></span> 
-//and replace ($this->|Class::$)prot to <a href="thisUri#propName>($this->|Class::$)prop</a>
-$code = preg_replace(
-    '/([\r\n]+?)^ {4}(public|protected|private) (\$)(\w+?)( |;)/m', 
-    '<span id="$4"> </span>$1    $2 $3$4$5',
-    $code
-);
-
-preg_match_all('/^ {4}(public|protected|private) (\$)(\w+?)( |;)/m', $code, $match_prop_names);
-$prop_names = $match_prop_names[3];
-
+//replace ($this->|Class::$)prop to <a href="thisUri#propName">($this->|Class::$)prop</a>
+preg_match_all('/^ {4}(public|protected|private) (static )?(\$)(\w+?)( |;)/m', $code, $match_prop_names);
+$prop_names = $match_prop_names[4];
+dump($match_prop_names);
 foreach ($prop_names as $prop_name) {
     $code = preg_replace(
-        '/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::\$)'.$prop_name.'/',
+        '/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::\$|static::\$|self::\$)'.$prop_name.'(,|:|\)| =|\[)/',
         "$1<a href=\"$url_with_query#$prop_name\">$prop_name</a>",
         $code
     );
 }
+
+//replace const CONST_NAME to <a href="thisUri#CONST_NAME">CONST_NAME</a>
+$code = preg_replace(
+    '/(static|self|'.$this_class.')::(\w+)(,|:|\)| =|\[)/',
+    '$1::<a href="'.$url_with_query.'#$2">$2</a>$3',
+    $code
+);
 
 output:
 

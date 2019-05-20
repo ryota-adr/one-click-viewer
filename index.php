@@ -145,7 +145,7 @@ if (!empty($match_ext_imp[0])) {
     }
 }
 
-//replace trait
+//replace traits
 preg_match('/ {4}use [\s\S]+? {4}(\/\*\*|public|protected|private)/', $code, $match_traits_str);
 
 if (!empty($match_traits_str[0])) {
@@ -172,7 +172,7 @@ if (!empty($match_traits_str[0])) {
     }
 }
 
-//replace doc
+//replace docs
 preg_match_all('/\/\*\*[\s\S]+?\*\//', $code, $match_docs_str);
 if (isset($match_docs_str[0])) {
     $docs_str = $match_docs_str[0];
@@ -198,7 +198,7 @@ if (isset($match_docs_str[0])) {
     }
 }
 
-//replace function
+//replace functions
 preg_match_all('/function[\s\S]+?^ {4}}/m', $code, $match_funcs_str);
 
 if (isset($match_funcs_str[0])) {
@@ -215,19 +215,36 @@ if (isset($match_funcs_str[0])) {
         $replace_func = $func_str;
         foreach ($func_classes as $func_class) {
             if (isset($class_arr[$func_class])) {
-                $replace_func = preg_replace('/(?<![\w\\\])'.$func_class.'( |\(|\)|;|::)/', "<a href=\"$url?ns=$class_arr[$func_class]\">$func_class</a>$1", $replace_func);
+                $replace_func = preg_replace('/(?<![\w\\\])'.$func_class.'( |\(|\)|;|::|[\r\n])/', "<a href=\"$url?ns=$class_arr[$func_class]\">$func_class</a>$1", $replace_func);
             } elseif (isset($alias_ns[$func_class])) {
-                $replace_func = preg_replace('/(?<![\w\\\])'.$func_class.'( |\(|\)|;|::)/', "<a href=\"$url?ns=$alias_ns[$func_class]\">$func_class</a>$1", $replace_func);
+                $replace_func = preg_replace('/(?<![\w\\\])'.$func_class.'( |\(|\)|;|::|[\r\n])/', "<a href=\"$url?ns=$alias_ns[$func_class]\">$func_class</a>$1", $replace_func);
             } else {
                 try {
                     $func_class_with_ns = $this_ns.'\\'.trim($func_class, '\\');
                     if ((new ReflectionClass($func_class_with_ns))->getFileName()) {
-                        $replace_func = preg_replace('/(?<![\w\\\])'.preg_quote($func_class).'( |\(|\)|;|::)/', "<a href=\"$url?ns=$func_class_with_ns\">$func_class</a>$1", $replace_func);
+                        $replace_func = preg_replace('/(?<![\w\\\])'.preg_quote($func_class).'( |\(|\)|;|::|[\r\n])/', "<a href=\"$url?ns=$func_class_with_ns\">$func_class</a>$1", $replace_func);
                     }
                 } catch (Exception $e) {}
             }
         }
         $code = str_replace($func_str, $replace_func, $code);
+    }
+}
+//replace properties
+preg_match_all('/(public|protected|private) \$\w+?[\s\S]*?;/', $code, $match_properties_str);
+$properties_str = $match_properties_str[0];
+foreach ($properties_str as $property_str) {
+    preg_match_all('/([\w\\\]+?)::class/', $property_str, $match_classes_with_ns);
+    foreach ($match_classes_with_ns[1] as $class_with_ns) {
+        try {
+            if ((new ReflectionClass($class_with_ns))->getFileName()) {
+                $code = str_replace(
+                    "$class_with_ns::class",
+                    "<a href=\"$url?ns=$class_with_ns\">$class_with_ns</a>::class",
+                    $code
+                );
+            }
+        } catch (Exception $e) {}
     }
 }
 
@@ -263,8 +280,8 @@ $prop_names = $match_prop_names[4];
 
 foreach ($prop_names as $prop_name) {
     $code = preg_replace(
-        '/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::\$|static::\$|self::\$)'.$prop_name.'(,|:|\)| =|\[)/',
-        "$1<a href=\"$url_with_query#$prop_name\">$prop_name</a>",
+        '/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::\$|static::\$|self::\$)'.$prop_name.'(,|:|\)| =|\[|\-'.htmlspecialchars('>').')/',
+        "$1<a href=\"$url_with_query#$prop_name\">$prop_name</a>$2",
         $code
     );
 }
@@ -334,7 +351,7 @@ $div_width = (strlen($count) + 1) * 9;
     pre {
         color: <?php echo $font_color ?>;
         font-family: Arial, Helvetica, sans-serif; 
-        font-size: 20px; 
+        font-size: <?php echo $font_size; ?>; 
         margin: 0;
         overflow-wrap: break-word; 
         white-space: pre-wrap; 
@@ -364,5 +381,7 @@ $div_width = (strlen($count) + 1) * 9;
         copyFrom.select();
         document.execCommand('copy');
         bodyElm.removeChild(copyFrom);
+
+        window.open();
     }, false);
 </script>

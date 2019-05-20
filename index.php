@@ -46,7 +46,7 @@ if (isset($_GET['ns'])) {
 ?>
 <div class="namespace">
     <form action="<?php basename(__FILE__) ?>" method="GET">
-        <input type="text" name="ns" value="<?php if (isset($this_ns) && isset($this_class)) { echo $this_ns.'\\'.$this_class; } else { echo $ns_or_path; } ?>" size="60" class="ns">
+        <input type="text" name="ns" value="<?php if (isset($this_ns) && isset($this_class)) { echo $this_ns.'\\'.$this_class; } elseif (isset($ns_or_path)) { echo $ns_or_path; } ?>" size="60" class="ns">
         <button>SHOW</button>
     </form>
 </div>

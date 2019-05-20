@@ -260,7 +260,7 @@ foreach ($func_names as $func_name) {
 //replace ($this->|Class::$)prop to <a href="thisUri#propName">($this->|Class::$)prop</a>
 preg_match_all('/^ {4}(public|protected|private) (static )?(\$)(\w+?)( |;)/m', $code, $match_prop_names);
 $prop_names = $match_prop_names[4];
-dump($match_prop_names);
+
 foreach ($prop_names as $prop_name) {
     $code = preg_replace(
         '/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::\$|static::\$|self::\$)'.$prop_name.'(,|:|\)| =|\[)/',

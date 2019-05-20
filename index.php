@@ -199,7 +199,7 @@ if (isset($match_docs_str[0])) {
 }
 
 //replace functions
-preg_match_all('/function[\s\S]+?^ {4}}/m', $code, $match_funcs_str);
+preg_match_all('/(public|protected|private) (static )?function(.+?\);|[\s\S]+?^ {4}})/m', $code, $match_funcs_str);
 
 if (isset($match_funcs_str[0])) {
     $funcs_str = $match_funcs_str[0];

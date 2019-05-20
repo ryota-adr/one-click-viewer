@@ -5,11 +5,11 @@ if (file_exists($autoloader)) {
     try {
         require($autoloader);
     } catch(Throwable $e) {
-        $code = "invalid namespace";
+        $code = "invalid file path";
         goto output;
     } 
 } else {
-    $code = "Invalid file path";
+    $code = "invalid file path";
     goto output;
 }
 
@@ -52,7 +52,7 @@ if (isset($_GET['ns'])) {
 </div>
 <?php
 if ($code === false) {
-    $code = "invalid namespace";
+    $code = "invalid classname with namespace or file path";
     goto output;
 }
 
@@ -304,7 +304,8 @@ $font_size = '20px';
 //print dir path
 if (isset($this_file)) {
     $dir = dirname($this_file);
-    echo "<span class=\"dir\">$dir</span>";
+    $relative_dir = 'vendor'.explode('vendor', $dir, 2)[1];
+    echo "<span class=\"dir\" data-dir=\"$dir\">$relative_dir</span>";
 }
 ?>
 </div>
@@ -373,9 +374,10 @@ $div_width = (strlen($count) + 1) * 9;
 <!-- copy dir path -->
 <script>
     var dir = document.querySelector("span.dir");
+    console.log(dir.dataset.dir);
     dir.addEventListener("click", function() {
         var copyFrom = document.createElement("textarea");
-        copyFrom.textContent = dir.textContent;
+        copyFrom.textContent = dir.dataset.dir;
         var bodyElm = document.getElementsByTagName("body")[0];
         bodyElm.appendChild(copyFrom);
         copyFrom.select();

@@ -32,6 +32,11 @@ if (isset($_GET['ns'])) {
             $this_class = $match_class[2];
         }
 
+        preg_match('/^(class|interface|abstract class|trait).+?extends (\w+)/m', $code, $match_parent);
+        if (isset($match_parent[2])) {
+            $parent_alias = $match_parent[2];
+        }
+        
         $pat_this_ns = '/namespace (.*?);/';
         preg_match('/namespace (.*?);/', $code, $match_this_ns);
         if (isset($match_this_ns[1])) {
@@ -293,6 +298,21 @@ $code = preg_replace(
     $code
 );
 
+//replace parant and parent funcs, props and consts
+if (isset($parent_alias) && isset($class_arr[$parent_alias])) {
+    $parent_with_ns = $class_arr[$parent_alias];
+} elseif (isset($parent_alias) && isset($alias_ns[$parent_alias])) {
+    $parent_with_ns = $alias_ns[$parent_alias];
+}
+if (isset($parent_with_ns)) {
+    $code = preg_replace('/(parent)::/', "<a href=\"$url?ns=$parent_with_ns\">parent</a>::", $code);
+}
+$code = preg_replace(
+    '/parent<\/a>::(\$)?(\w+)/',
+    "/parent</a>::<a href=\"$url?ns=$parent_with_ns#$2\">$2</a>",
+    $code
+);
+
 output:
 
 $font_color = '#515151';
@@ -302,10 +322,14 @@ $font_size = '20px';
 <div>
 <?php
 //print dir path
-if (isset($this_file)) {
+if (isset($autoloader) && isset($this_file)) {
     $dir = dirname($this_file);
-    $relative_dir = 'vendor'.explode('vendor', $dir, 2)[1];
-    echo "<span class=\"dir\" data-dir=\"$dir\">$relative_dir</span>";
+    $dir_arr = explode('/', $autoloader);
+    $idx = array_search('vendor', $dir_arr);
+    $base_dir = $dir_arr[$idx - 1];
+    $replative_dir = $base_dir.explode($base_dir, $autoloader, 2)[1];
+
+    echo "<span class=\"dir\" data-dir=\"$dir\">$replative_dir</span>";
 }
 ?>
 </div>
@@ -374,7 +398,6 @@ $div_width = (strlen($count) + 1) * 9;
 <!-- copy dir path -->
 <script>
     var dir = document.querySelector("span.dir");
-    console.log(dir.dataset.dir);
     dir.addEventListener("click", function() {
         var copyFrom = document.createElement("textarea");
         copyFrom.textContent = dir.dataset.dir;

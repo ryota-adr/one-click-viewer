@@ -303,17 +303,21 @@ if (isset($parent_alias) && isset($class_arr[$parent_alias])) {
     $parent_with_ns = $class_arr[$parent_alias];
 } elseif (isset($parent_alias) && isset($alias_ns[$parent_alias])) {
     $parent_with_ns = $alias_ns[$parent_alias];
+} else {
+    try {
+        new ReflectionClass($this_ns.'\\'.$parent_alias);
+        $parent_with_ns = $this_ns.'\\'.$parent_alias;
+    } catch (Exception $e) {}
 }
 if (isset($parent_with_ns)) {
     $code = preg_replace('/(parent)::/', "<a href=\"$url?ns=$parent_with_ns\">parent</a>::", $code);
 
     $code = preg_replace(
         '/parent<\/a>::(\$)?(\w+)/',
-        "/parent</a>::<a href=\"$url?ns=$parent_with_ns#$2\">$2</a>",
+        "parent</a>::<a href=\"$url?ns=$parent_with_ns#$2\">$2</a>",
         $code
     );
 }
-
 
 output:
 

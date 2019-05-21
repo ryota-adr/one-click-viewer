@@ -182,21 +182,35 @@ preg_match_all('/\/\*\*[\s\S]+?\*\//', $code, $match_docs_str);
 if (isset($match_docs_str[0])) {
     $docs_str = $match_docs_str[0];
     foreach ($docs_str as $doc_str) {
-        preg_match_all('/@\w+? +(\\\?([A-Z][a-z]+\\\?)+)/', $doc_str, $match_classes_with_ns);
-        if (isset($match_classes_with_ns[1])) {
-            $classes_with_ns = $match_classes_with_ns[1];
-            $classes_with_ns = array_unique($classes_with_ns);
+        preg_match_all('/@\w+? +?([\w\\\]+)/', $doc_str, $match_classes_and_some);
+        if (isset($match_classes_and_some[1])) {
+            $classes_and_some = $match_classes_and_some[1];
+            $classes_and_some = array_unique($classes_and_some);
             $replace_doc = $doc_str;
-            foreach ($classes_with_ns as $class_with_ns) {
-                try {
-                    if ((new ReflectionClass($class_with_ns))->getFileName()) {
-                        $replace_doc = str_replace($class_with_ns, "<a href=\"$url?ns=$class_with_ns\">$class_with_ns</a>", $replace_doc);
+            foreach ($classes_and_some as $class_or_some) {
+                if (isset($class_arr[$class_or_some])) {
+                    $replace_doc = preg_replace(
+                        '/'.$class_or_some.'( |\||,|[\r\n])/',
+                        " <a href=\"$url?ns=$class_arr[$class_or_some]\">$class_or_some</a>$1",
+                        $replace_doc
+                    );
+                } elseif (isset($alias_ns[$class_or_some])) {
+                    $replace_doc = preg_replace(
+                        '/'.$class_or_some.'( |\||,|[\r\n])/',
+                        " <a href=\"$url?ns=$alias_ns[$class_or_some]\">$class_or_some</a>$1",
+                        $replace_doc
+                    );
+                } else {
+                    try {
+                        if ((new ReflectionClass($class_or_some))->getFileName()) {
+                            $replace_doc = str_replace($class_or_some, "<a href=\"$url?ns=$class_or_some\">$class_or_some</a>", $replace_doc);
 
-                        $split = explode('\\', $class_with_ns);
-                        $end = end($split);
-                        $class_arr[$end] = $class_with_ns;
-                    }
-                } catch (Exception $e) {}
+                            $split = explode('\\', $class_or_some);
+                            $end = end($split);
+                            $class_arr[$end] = $class_or_some;
+                        }
+                    } catch (Exception $e) {}
+                }
             }
             $code = str_replace($doc_str, $replace_doc, $code);
         }
@@ -273,7 +287,7 @@ $func_names = $match_func_names[5];
 
 foreach ($func_names as $func_name) {
     $code = preg_replace(
-        '/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::)'.$func_name.'(\()/',
+        '/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::|static::|self::)'.$func_name.'(\()/',
         "$1<a href=\"$url_with_query#$func_name\">$func_name</a>$2",
         $code
     );
@@ -285,7 +299,7 @@ $prop_names = $match_prop_names[4];
 
 foreach ($prop_names as $prop_name) {
     $code = preg_replace(
-        '/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::\$|static::\$|self::\$)'.$prop_name.'(,|:|\)| =|\[|\-'.htmlspecialchars('>').')/',
+        '/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::\$|static::\$|self::\$)'.$prop_name.'(,|:|;|\)| |\.|\[|\-'.htmlspecialchars('>').')/',
         "$1<a href=\"$url_with_query#$prop_name\">$prop_name</a>$2",
         $code
     );
@@ -293,30 +307,31 @@ foreach ($prop_names as $prop_name) {
 
 //replace const CONST_NAME to <a href="thisUri#CONST_NAME">CONST_NAME</a>
 $code = preg_replace(
-    '/(static|self|'.$this_class.')::(\w+)(,|:|\)| =|\[)/',
+    '/(static|self|'.$this_class.')::(\w+)(,|:|\)| |\[)/',
     '$1::<a href="'.$url_with_query.'#$2">$2</a>$3',
     $code
 );
 
 //replace parant and parent funcs, props and consts
-if (isset($parent_alias) && isset($class_arr[$parent_alias])) {
-    $parent_with_ns = $class_arr[$parent_alias];
-} elseif (isset($parent_alias) && isset($alias_ns[$parent_alias])) {
-    $parent_with_ns = $alias_ns[$parent_alias];
-} else {
-    try {
-        new ReflectionClass($this_ns.'\\'.$parent_alias);
-        $parent_with_ns = $this_ns.'\\'.$parent_alias;
-    } catch (Exception $e) {}
-}
-if (isset($parent_with_ns)) {
-    $code = preg_replace('/(parent)::/', "<a href=\"$url?ns=$parent_with_ns\">parent</a>::", $code);
-
-    $code = preg_replace(
-        '/parent<\/a>::(\$)?(\w+)/',
-        "parent</a>::<a href=\"$url?ns=$parent_with_ns#$2\">$2</a>",
-        $code
-    );
+if (isset($parent_alias)) {
+    if (isset($class_arr[$parent_alias])) {
+        $parent_with_ns = $class_arr[$parent_alias];
+    } elseif (isset($alias_ns[$parent_alias])) {
+        $parent_with_ns = $alias_ns[$parent_alias];
+    } else {
+        try {
+            new ReflectionClass($this_ns.'\\'.$parent_alias);
+            $parent_with_ns = $this_ns.'\\'.$parent_alias;
+        } catch (Exception $e) {}
+    }
+    if (isset($parent_with_ns)) {
+        $code = preg_replace('/(parent)::/', "<a href=\"$url?ns=$parent_with_ns\">parent</a>::", $code);
+        $code = preg_replace(
+            '/parent<\/a>::(\$)?(\w+)/',
+            "parent</a>::<a href=\"$url?ns=$parent_with_ns#$2\">$2</a>",
+            $code
+        );
+    }
 }
 
 output:
@@ -333,7 +348,7 @@ if (isset($autoloader) && isset($this_file)) {
     $dir_arr = explode('/', $autoloader);
     $idx = array_search('vendor', $dir_arr);
     $base_dir = $dir_arr[$idx - 1];
-    $replative_dir = $base_dir.explode($base_dir, $autoloader, 2)[1];
+    $replative_dir = $base_dir.explode($base_dir, $dir, 2)[1];
 
     echo "<span class=\"dir\" data-dir=\"$dir\">$replative_dir</span>";
 }

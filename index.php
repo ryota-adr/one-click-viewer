@@ -306,12 +306,14 @@ if (isset($parent_alias) && isset($class_arr[$parent_alias])) {
 }
 if (isset($parent_with_ns)) {
     $code = preg_replace('/(parent)::/', "<a href=\"$url?ns=$parent_with_ns\">parent</a>::", $code);
+
+    $code = preg_replace(
+        '/parent<\/a>::(\$)?(\w+)/',
+        "/parent</a>::<a href=\"$url?ns=$parent_with_ns#$2\">$2</a>",
+        $code
+    );
 }
-$code = preg_replace(
-    '/parent<\/a>::(\$)?(\w+)/',
-    "/parent</a>::<a href=\"$url?ns=$parent_with_ns#$2\">$2</a>",
-    $code
-);
+
 
 output:
 

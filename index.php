@@ -27,12 +27,12 @@ if (isset($_GET['ns'])) {
             $code = @file_get_contents($this_file);
         }
 
-        preg_match('/^(class|interface|abstract class|trait) (\w+)/m', $code, $match_class);
+        preg_match('/^(class|interface|abstract class|trait|final class) (\w+)/m', $code, $match_class);
         if (isset($match_class[2])) {
             $this_class = $match_class[2];
         }
 
-        preg_match('/^(class|interface|abstract class|trait).+?extends (\w+)/m', $code, $match_parent);
+        preg_match('/^(class|interface|abstract class|trait|final class).+?extends (\w+)/m', $code, $match_parent);
         if (isset($match_parent[2])) {
             $parent_alias = $match_parent[2];
         }
@@ -120,7 +120,7 @@ if (isset($match_uses_str[0])) {
 }
 
 //replace extends and implements
-preg_match('/^(class|interface|abstract class|trait) \w+? (extends|implements) .+[\r\n]/m', $code, $match_ext_imp);
+preg_match('/^(class|interface|abstract class|trait|final class) \w+? (extends|implements) .+[\r\n]/m', $code, $match_ext_imp);
 
 if (!empty($match_ext_imp[0])) {
     $ext_imp_str = $match_ext_imp[0];
@@ -140,8 +140,10 @@ if (!empty($match_ext_imp[0])) {
             } else {
                 try {
                     $ext_imp_with_ns = $this_ns.'\\'.trim($ext_imp, '\\');
-                    if ((new ReflectionClass($this_ns.'\\'.trim($ext_imp, '\\')))->getFileName()) {
+                    if ((new ReflectionClass($ext_imp_with_ns))->getFileName()) {
                         $replace_ext_imp_str = str_replace(" $ext_imp", " <a href=\"$url?ns=$ext_imp_with_ns\">$ext_imp</a>", $replace_ext_imp_str);
+
+                        $class_arr[$ext_imp] = $ext_imp_with_ns;
                     }
                 } catch (Exception $e) {}
             }
@@ -169,6 +171,8 @@ if (!empty($match_traits_str[0])) {
                     $trait_with_ns = $this_ns.'\\'.trim($trait, '\\');
                     if ((new ReflectionClass($trait_with_ns))->getFileName()) {
                         $replace_traits_str = preg_replace('/'.preg_quote($trait).'( |,|;|)/', "<a href=\"$url?ns=$trait_with_ns\">$trait</a>$1", $replace_traits_str);
+
+                        $class_arr[$trait] = $trait_with_ns;
                     }
                 } catch (Exception $e) {}
             }
@@ -191,13 +195,13 @@ if (isset($match_docs_str[0])) {
                 if (isset($class_arr[$class_or_some])) {
                     $replace_doc = preg_replace(
                         '/'.$class_or_some.'( |\||,|[\r\n])/',
-                        " <a href=\"$url?ns=$class_arr[$class_or_some]\">$class_or_some</a>$1",
+                        "<a href=\"$url?ns=$class_arr[$class_or_some]\">$class_or_some</a>$1",
                         $replace_doc
                     );
                 } elseif (isset($alias_ns[$class_or_some])) {
                     $replace_doc = preg_replace(
                         '/'.$class_or_some.'( |\||,|[\r\n])/',
-                        " <a href=\"$url?ns=$alias_ns[$class_or_some]\">$class_or_some</a>$1",
+                        "<a href=\"$url?ns=$alias_ns[$class_or_some]\">$class_or_some</a>$1",
                         $replace_doc
                     );
                 } else {
@@ -209,7 +213,16 @@ if (isset($match_docs_str[0])) {
                             $end = end($split);
                             $class_arr[$end] = $class_or_some;
                         }
-                    } catch (Exception $e) {}
+                    } catch (Exception $e) {
+                        try {
+                            $class_or_some_with_ns = $this_ns.'\\'.trim($class_or_some, '\\');
+                            if ((new ReflectionClass($class_or_some_with_ns))->getFileName()) {
+                                $replace_doc = str_replace($class_or_some, "<a href=\"$url?ns=$class_or_some_with_ns\">$class_or_some</a>", $replace_doc);
+
+                                $class_arr[$class_or_some] = $class_or_some_with_ns;
+                            }
+                        } catch (Exception $e) {}
+                    }
                 }
             }
             $code = str_replace($doc_str, $replace_doc, $code);
@@ -234,14 +247,14 @@ if (isset($match_funcs_str[0])) {
         $replace_func = $func_str;
         foreach ($func_classes as $func_class) {
             if (isset($class_arr[$func_class])) {
-                $replace_func = preg_replace('/(?<![\w\\\])'.$func_class.'( |\(|\)|;|::|[\r\n])/', "<a href=\"$url?ns=$class_arr[$func_class]\">$func_class</a>$1", $replace_func);
+                $replace_func = preg_replace('/(?<![\w\\\])'.$func_class.'( |\(|\)|,|\]|;|::|[\r\n])/', "<a href=\"$url?ns=$class_arr[$func_class]\">$func_class</a>$1", $replace_func);
             } elseif (isset($alias_ns[$func_class])) {
-                $replace_func = preg_replace('/(?<![\w\\\])'.$func_class.'( |\(|\)|;|::|[\r\n])/', "<a href=\"$url?ns=$alias_ns[$func_class]\">$func_class</a>$1", $replace_func);
+                $replace_func = preg_replace('/(?<![\w\\\])'.$func_class.'( |\(|\)|,|\]|;|::|[\r\n])/', "<a href=\"$url?ns=$alias_ns[$func_class]\">$func_class</a>$1", $replace_func);
             } else {
                 try {
                     $func_class_with_ns = $this_ns.'\\'.trim($func_class, '\\');
                     if ((new ReflectionClass($func_class_with_ns))->getFileName()) {
-                        $replace_func = preg_replace('/(?<![\w\\\])'.preg_quote($func_class).'( |\(|\)|;|::|[\r\n])/', "<a href=\"$url?ns=$func_class_with_ns\">$func_class</a>$1", $replace_func);
+                        $replace_func = preg_replace('/(?<![\w\\\])'.preg_quote($func_class).'( |\(|\)|,|\]|;|::|[\r\n])/', "<a href=\"$url?ns=$func_class_with_ns\">$func_class</a>$1", $replace_func);
                     }
                 } catch (Exception $e) {}
             }

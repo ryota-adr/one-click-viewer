@@ -230,36 +230,36 @@ if (isset($match_docs_str[0])) {
     }
 }
 
-//replace functions
-preg_match_all('/(public|protected|private) (static )?function(.+?\);|[\s\S]+?^ {4}})/m', $code, $match_funcs_str);
+//replace methods
+preg_match_all('/(public|protected|private) (static )?function(.+?\);|[\s\S]+?^ {4}})/m', $code, $match_methods_str);
 
-if (isset($match_funcs_str[0])) {
-    $funcs_str = $match_funcs_str[0];
+if (isset($match_methods_str[0])) {
+    $methods_str = $match_methods_str[0];
     
-    foreach ($funcs_str as $func_str) {
-        preg_match_all('/\\\?([A-Z][a-z]+\\\?)+/', $func_str, $match_func_classes);
-        $func_classes = array_unique($match_func_classes[0]);
-        $idx = array_search($this_class, $func_classes);
+    foreach ($methods_str as $method_str) {
+        preg_match_all('/\\\?([A-Z][a-z]+\\\?)+/', $method_str, $match_method_classes);
+        $method_classes = array_unique($match_method_classes[0]);
+        $idx = array_search($this_class, $method_classes);
         if ($idx !== false) {
-            array_splice($func_classes, $idx, 1);
+            array_splice($method_classes, $idx, 1);
         }
 
-        $replace_func = $func_str;
-        foreach ($func_classes as $func_class) {
-            if (isset($class_arr[$func_class])) {
-                $replace_func = preg_replace('/(?<![\w\\\])'.$func_class.'( |\(|\)|,|\]|;|::|[\r\n])/', "<a href=\"$url?ns=$class_arr[$func_class]\">$func_class</a>$1", $replace_func);
-            } elseif (isset($alias_ns[$func_class])) {
-                $replace_func = preg_replace('/(?<![\w\\\])'.$func_class.'( |\(|\)|,|\]|;|::|[\r\n])/', "<a href=\"$url?ns=$alias_ns[$func_class]\">$func_class</a>$1", $replace_func);
+        $replace_method = $method_str;
+        foreach ($method_classes as $method_class) {
+            if (isset($class_arr[$method_class])) {
+                $replace_method = preg_replace('/(?<![\w\\\])'.$method_class.'( |\(|\)|,|\]|;|::|[\r\n])/', "<a href=\"$url?ns=$class_arr[$method_class]\">$method_class</a>$1", $replace_method);
+            } elseif (isset($alias_ns[$method_class])) {
+                $replace_method = preg_replace('/(?<![\w\\\])'.$method_class.'( |\(|\)|,|\]|;|::|[\r\n])/', "<a href=\"$url?ns=$alias_ns[$method_class]\">$method_class</a>$1", $replace_method);
             } else {
                 try {
-                    $func_class_with_ns = $this_ns.'\\'.trim($func_class, '\\');
-                    if ((new ReflectionClass($func_class_with_ns))->getFileName()) {
-                        $replace_func = preg_replace('/(?<![\w\\\])'.preg_quote($func_class).'( |\(|\)|,|\]|;|::|[\r\n])/', "<a href=\"$url?ns=$func_class_with_ns\">$func_class</a>$1", $replace_func);
+                    $method_class_with_ns = $this_ns.'\\'.trim($method_class, '\\');
+                    if ((new ReflectionClass($method_class_with_ns))->getFileName()) {
+                        $replace_method = preg_replace('/(?<![\w\\\])'.preg_quote($method_class).'( |\(|\)|,|\]|;|::|[\r\n])/', "<a href=\"$url?ns=$method_class_with_ns\">$method_class</a>$1", $replace_method);
                     }
                 } catch (Exception $e) {}
             }
         }
-        $code = str_replace($func_str, $replace_func, $code);
+        $code = str_replace($method_str, $replace_method, $code);
     }
 }
 //replace properties

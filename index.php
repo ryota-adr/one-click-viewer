@@ -280,8 +280,8 @@ foreach ($properties_str as $property_str) {
     }
 }
 
-//add <span id="funcName or propName"> </span> 
-//and replace ($this->|Class::)func() to <a href="thisUri#funcName>($this->|Class::)func()</a>
+//add <span id="methodName or propName"> </span> 
+//and replace ($this->|Class::)method() to <a href="thisUri#methodName>($this->|Class::)method()</a>
 $code = preg_replace( //with doc
     '/([\r\n])(^ {4}\/\*\*)([\s\S]+?^ {5}?\*\/[\r\n]+^ {4})(abstract )?(const|public|protected|private) (static )?(function )?(\$)?(\w+)/m',
     '<span id="$9"> </span>$1$2$3$4$5 $6$7$8$9',
@@ -346,26 +346,44 @@ if (isset($parent_alias)) {
         );
     }
 }
+//replace external class static method
+foreach (array_merge($class_arr, $alias_ns) as $alias => $alias_with_ns) {
+    $code = preg_replace(
+        '/'.$alias.'<\/a>::(\w+)\(/',
+        "$alias</a>::<a href=\"$url?ns=$alias_with_ns#$1\">$1</a>(",
+        $code
+    );
+}
 
 output:
 
 $font_color = '#515151';
 $font_size = '20px';
 ?>
-<pre style="overflow-wrap: break-word; white-space: pre-wrap; font-family: Arial, Helvetica, sans-serif; font-size: $font_size; color: <?php echo $font_color ?>; margin-top: 2em;">
-<div>
+<div class="dir">
 <?php
 //print dir path
 if (isset($autoloader) && isset($this_file)) {
     $dir = dirname($this_file);
     $dir_arr = explode('/', $autoloader);
-    $idx = array_search('vendor', $dir_arr);
-    $base_dir = $dir_arr[$idx - 1];
+    $base_dir = $dir_arr[array_search('vendor', $dir_arr) - 1];
     $replative_dir = $base_dir.explode($base_dir, $dir, 2)[1];
 
-    echo "<span class=\"dir\" data-dir=\"$dir\">$replative_dir</span>";
+    echo "<pre><span class=\"dir\" data-dir=\"$dir\">$replative_dir</span></pre>";
 }
 ?>
+</div>
+<div class="toggle">
+    <pre><span>Files</span><span class="toggle">[▶]</span></pre>
+</div>
+<div class="phpfiles" style="display: none;">
+<?php 
+foreach (glob($dir."/*.php") as $php_file) {
+    $base_name = basename($php_file);
+    echo "<div><pre><span>    </span><a href=\"$url?ns=$php_file\">$base_name</a></pre></div>";
+}
+?>
+</div>
 </div>
 <div>
 <table>
@@ -381,7 +399,6 @@ $div_width = (strlen($count) + 1) * 9;
 ?>
 </table>
 </div>
-</pre>
 <style>
     div.namespace {
         position: fixed; top: 0px; left: 0px;
@@ -422,12 +439,24 @@ $div_width = (strlen($count) + 1) * 9;
     a:hover {
         text-decoration: underline;
     }
+    div.dir {
+        margin-top: 40px;
+        margin-bottom: 20px;
+    }
     span.dir:hover {
         background-color: #e2e6ff;
         color: #191919;
         cursor: pointer;
     }
-    
+    div.toggle {
+        margin-bottom: 20px;
+    }
+    span.toggle {
+        cursor: pointer;
+    }
+    div.phpfiles {
+        margin-bottom: 20px;
+    }
 </style>
 <!-- copy dir path -->
 <script>
@@ -443,4 +472,16 @@ $div_width = (strlen($count) + 1) * 9;
 
         window.open();
     }, false);
+
+    var toggle = document.querySelector("span.toggle");
+    toggle.addEventListener("click", function() {
+        var files = document.querySelector("div.phpfiles");
+        if (files.style.display === "none") {
+            toggle.innerHTML = "[▼]";
+            files.style.display = "block";
+        } else {
+            toggle.innerHTML = "[▶]";
+            files.style.display = "none";
+        }
+    });
 </script>

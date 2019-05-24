@@ -66,13 +66,16 @@ $code = htmlspecialchars($code);
 //replace uses    
 preg_match('/namespace[\s][A-Za-z\\\]+?;[\s\S]+?(class|interface|abstract class|trait)/', $code, $match_uses_str);
 
+$class_arr = [];
+$all_ns_alias_arr = [];
+
 if (isset($match_uses_str[0])) {
     $uses_str = $match_uses_str[0];
 
     preg_match_all('/use ([a-z\\\]+?);/i', $uses_str, $match_uses);
     $classes_with_ns = $match_uses[1];
     $replace_uses_str = $uses_str;
-    $class_arr = [];
+    
     foreach ($classes_with_ns as $class_with_ns) {
         try {
             $path = (new ReflectionClass($class_with_ns))->getFileName();
@@ -90,7 +93,6 @@ if (isset($match_uses_str[0])) {
     //replace uses with as
     preg_match_all('/use (([A-Za-z\\\]+?) as ([A-Za-z\\\]+?));/', $replace_uses_str, $match_use_as);
 
-    $all_ns_alias_arr = [];
     for ($i = 0; $i < count($match_use_as[0]); $i++) {
         $all_ns_alias_arr[] = array_column($match_use_as, $i);
     }
@@ -117,6 +119,14 @@ if (isset($match_uses_str[0])) {
         } catch (Exception $e) {}
     }
     $code = str_replace($replace_uses_str, $replace_use_with_as_str, $code);
+}
+
+//add class in this directory to $class_arr
+$files = glob(dirname($this_file).'/*.php');
+foreach ($files as $file) {
+    $php_file = basename($file);
+    $class_name = substr($php_file, 0, strpos($php_file, ".php"));
+    $class_arr[$class_name] = $this_ns.'\\'.$class_name;
 }
 
 //replace extends and implements
@@ -194,13 +204,13 @@ if (isset($match_docs_str[0])) {
             foreach ($classes_and_some as $class_or_some) {
                 if (isset($class_arr[$class_or_some])) {
                     $replace_doc = preg_replace(
-                        '/'.$class_or_some.'( |\||,|[\r\n])/',
+                        '/'.$class_or_some.'( |\||,|\[|[\r\n])/',
                         "<a href=\"$url?ns=$class_arr[$class_or_some]\">$class_or_some</a>$1",
                         $replace_doc
                     );
                 } elseif (isset($alias_ns[$class_or_some])) {
                     $replace_doc = preg_replace(
-                        '/'.$class_or_some.'( |\||,|[\r\n])/',
+                        '/'.$class_or_some.'( |\||,|\[|[\r\n])/',
                         "<a href=\"$url?ns=$alias_ns[$class_or_some]\">$class_or_some</a>$1",
                         $replace_doc
                     );
@@ -312,7 +322,7 @@ $prop_names = $match_prop_names[4];
 
 foreach ($prop_names as $prop_name) {
     $code = preg_replace(
-        '/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::\$|static::\$|self::\$)'.$prop_name.'(,|:|;|\)| |\.|\[|\-'.htmlspecialchars('>').')/',
+        '/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::\$|static::\$|self::\$)'.$prop_name.'(,|:|;|\)| |\.|\[|\]|\-'.htmlspecialchars('>').')/',
         "$1<a href=\"$url_with_query#$prop_name\">$prop_name</a>$2",
         $code
     );
@@ -346,11 +356,21 @@ if (isset($parent_alias)) {
         );
     }
 }
-//replace external class static method
+//replace external class static method, prop and const
 foreach (array_merge($class_arr, $alias_ns) as $alias => $alias_with_ns) {
     $code = preg_replace(
-        '/'.$alias.'<\/a>::(\w+)\(/',
+        '/'.$alias.'<\/a>::(\w+?)\(/',
         "$alias</a>::<a href=\"$url?ns=$alias_with_ns#$1\">$1</a>(",
+        $code
+    );
+    $code = preg_replace(
+        '/'.$alias.'<\/a>::\$(\w+?)(,|:|;|\)| |\.|\[|\]|\-'.htmlspecialchars('>').')/',
+        "$alias</a>::<a href=\"$url?ns=$alias_with_ns#$1\">$1</a>$2",
+        $code
+    );
+    $code = preg_replace(
+        '/'.$alias.'<\/a>::(\w+?)(,|:|;|\)| |\.|\[|\])/',
+        "$alias</a>::<a href=\"$url?ns=$alias_with_ns#$1\">$1</a>$2",
         $code
     );
 }
@@ -377,8 +397,8 @@ if (isset($autoloader) && isset($this_file)) {
     <pre><span>Files</span><span class="toggle">[▶]</span></pre>
 </div>
 <div class="phpfiles" style="display: none;">
-<?php 
-foreach (glob($dir."/*.php") as $php_file) {
+<?php
+foreach (glob("$dir/*.php") as $php_file) {
     $base_name = basename($php_file);
     echo "<div><pre><span>    </span><a href=\"$url?ns=$php_file\">$base_name</a></pre></div>";
 }

@@ -294,36 +294,36 @@ foreach ($properties_str as $property_str) {
 //and replace ($this->|Class::)method() to <a href="thisUri#methodName>($this->|Class::)method()</a>
 $code = preg_replace( //with doc
     '/([\r\n])(^ {4}\/\*\*)([\s\S]+?^ {5}?\*\/[\r\n]+^ {4})(abstract )?(const|public|protected|private) (static )?(function )?(\$)?(\w+)/m',
-    '<span id="$9"> </span>$1$2$3$4$5 $6$7$8$9',
+    '<span id="$9"> </span>$1$2$3$4$5 $6$7$8<span class="$9">$9</span>',
     $code
 );
 $code = preg_replace( //without doc
     '/(?<!\*\/)([\r\n])(^ {4})(abstract )?(const|public|protected|private) (static )?(function )?(\$)?(\w+)/m',
-    '<span id="$8"> </span>$1$2$3$4 $5$6$7$8',
+    '<span id="$8"> </span>$1$2$3$4 $5$6<span class="$8">$7$8</span>',
     $code
 );
 
 $url_with_query =  (empty($_SERVER['HTTPS']) ? 'http://' : 'https://').$_SERVER["HTTP_HOST"] . $_SERVER['REQUEST_URI'];
 
-preg_match_all('/^ {4}(abstract )?(public|protected|private)(.+?)(function )(\w+)(\()/m', $code, $match_func_names);
+preg_match_all('/^ {4}(abstract )?(public|protected|private)(.+?)(function )<span class="\w+?">(\w+)<\/span>(\()/m', $code, $match_func_names);
 $func_names = $match_func_names[5];
 
 foreach ($func_names as $func_name) {
     $code = preg_replace(
         '/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::|static::|self::)'.$func_name.'(\()/',
-        "$1<a href=\"$url_with_query#$func_name\">$func_name</a>$2",
+        "$1<a href=\"$url_with_query#$func_name\" role=\"link\">$func_name</a>$2",
         $code
     );
 }
 
 //replace ($this->|Class::$)prop to <a href="thisUri#propName">($this->|Class::$)prop</a>
-preg_match_all('/^ {4}(public|protected|private) (static )?(\$)(\w+?)( |;)/m', $code, $match_prop_names);
+preg_match_all('/^ {4}(public|protected|private) (static )?<span class="\w+?">(\$)(\w+?)<\/span>( |;)/m', $code, $match_prop_names);
 $prop_names = $match_prop_names[4];
 
 foreach ($prop_names as $prop_name) {
     $code = preg_replace(
         '/(this\-'.htmlspecialchars('>').'|' . preg_quote($this_class) . '::\$|static::\$|self::\$)'.$prop_name.'(,|:|;|\)| |\.|\[|\]|\-'.htmlspecialchars('>').')/',
-        "$1<a href=\"$url_with_query#$prop_name\">$prop_name</a>$2",
+        "$1<a href=\"$url_with_query#$prop_name\" role=\"link\">$prop_name</a>$2",
         $code
     );
 }
@@ -331,7 +331,7 @@ foreach ($prop_names as $prop_name) {
 //replace const CONST_NAME to <a href="thisUri#CONST_NAME">CONST_NAME</a>
 $code = preg_replace(
     '/(static|self|'.$this_class.')::(\w+)(,|:|\)| |\[)/',
-    '$1::<a href="'.$url_with_query.'#$2">$2</a>$3',
+    '$1::<a href="'.$url_with_query.'#$2" role="link">$2</a>$3',
     $code
 );
 
@@ -503,5 +503,48 @@ $div_width = (strlen($count) + 1) * 9;
             toggle.innerHTML = "[▶]";
             files.style.display = "none";
         }
+    });
+
+    var targetedArray = [];
+    function targetNameChange() {
+        if (location.hash) {
+            var class_name = location.hash.replace('#', '');
+            var target_name = document.querySelector("span." + class_name);
+
+            targetedArray.forEach(function(elem) {
+                elem.style.backgroundColor = "";
+                elem.style.color = "";
+            });
+
+            if (! targetedArray.includes(target_name)) {
+                targetedArray.push(target_name);
+            }
+        
+            target_name.style.backgroundColor = "#e2e6ff";
+            target_name.style.color = "#191919";
+        }
+    }
+
+    window.onhashchange = targetNameChange;
+    targetNameChange();
+
+    var links = document.querySelectorAll('[role="link"]');
+    var pressedLinks = [];
+    links.forEach(function(link) {
+        link.addEventListener("mouseup", function(e) {
+            if (e.which === 1 || e.which === 2) {
+                pressedLinks.forEach(function(link) {
+                    link.style.backgroundColor = "";
+                    link.style.color = "";
+                });
+
+                if (! pressedLinks.includes(link)) {
+                    pressedLinks.push(link);
+                }
+
+                link.style.backgroundColor = "#ceffb5";
+                link.style.color = "#191919";
+            }
+        });
     });
 </script>

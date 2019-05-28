@@ -1,4 +1,4 @@
-![sample](http://ryota01.com/github/one-click-viewer.gif)
+![sample](https://github.com/ryota-adr/one-click-viewer/blob/master/one-click-viewer.gif)
 
 ## 説明
 1クリックで外部クラスのコードを表示できるPHPコードビューワー

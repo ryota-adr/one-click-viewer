@@ -417,7 +417,7 @@ HTML;
         $reflectionParent = $reflectionThisClass->getParentClass();
 
         while ($reflectionParent) {
-            foreach ($reflectionParent->getTraits() as $traits) {
+            foreach ($reflectionParent->getTraits() as $trait) {
                 if (strpos($trait->getName(), '\\')) {
                     $this->ancestorsAndTraits[] = $trait;
                 }
@@ -550,27 +550,28 @@ HTML;
         $matchExceptUses = $matchExceptUses[0];
 
         preg_match_all(
-            '/((\\\?[A-Z][a-z]+)+)(:|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
+            '/((\\\?[A-Z][a-z]+)+)(;|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
             $this->code,
             $matchClasses
         );
+        
         $classes = array_unique($matchClasses[1]);
         $idx = array_search($this->currentClass, $classes);
         array_splice($classes, $idx, 1);
-
+        
         $replaceExceptUses = $matchExceptUses;
         foreach ($classes as $class) {
             if (isset($this->classArr[$class])) {
                 $fullyQualifiedName = preg_quote($this->classArr[$class]);
 
                 $replaceExceptUses = preg_replace(
-                    '/(\\\)?'.$fullyQualifiedName.'(:|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
+                    '/(\\\)?'.$fullyQualifiedName.'(;|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
                     "<a href=\"$this->urlWithoutQuery?q=$1$fullyQualifiedName\" role=\"link\">$fullyQualifiedName</a>$2",
                     $replaceExceptUses
                 );
 
                 $replaceExceptUses = preg_replace(
-                    '/(?<!\\\)'.$class.'(:|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
+                    '/(?<!\\\)'.$class.'(;|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
                     "<a href=\"$this->urlWithoutQuery?q=$fullyQualifiedName\" role=\"link\">$class</a>$1",
                     $replaceExceptUses
                 );

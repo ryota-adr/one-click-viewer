@@ -560,6 +560,7 @@ HTML;
         array_splice($classes, $idx, 1);
         
         $replaceExceptUses = $matchExceptUses;
+
         foreach ($classes as $class) {
             if (isset($this->classArr[$class])) {
                 $fullyQualifiedName = preg_quote($this->classArr[$class]);
@@ -580,11 +581,12 @@ HTML;
                     //same namespace classes
                     $class = trim($class, '\\');
                     $fullyQualifiedName = $this->namespace . '\\' . $class;
+
                     if ((new ReflectionClass($fullyQualifiedName))->getFileName()) {
                         $fullyQualifiedName = preg_quote($fullyQualifiedName);
 
                         $replaceExceptUses = preg_replace(
-                            '/(?<!\\\)'.$class.'(:|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
+                            '/' . preg_quote($class) . '(;|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
                             "<a href=\"$this->urlWithoutQuery?q=$fullyQualifiedName\" role=\"link\">$class</a>$1",
                             $replaceExceptUses
                         );

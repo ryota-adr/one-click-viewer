@@ -24,8 +24,10 @@
 
 ## 使い方
 
-```php:index.php
-$autoloader = '\vendor\autoloader.php';
+<p>.env.exampleを.envに変更</p>
+
+```text:.env
+AUTOLOADERPATH=path/to/vendor/autoloader.php
 ```
 
-<p>autoloader.phpのパスを代入してから、フォームのテキストボックスに名前空間＋クラス名を入れるとコードが表示されます。</p>
+<p>上記を終えてフォームのテキストボックスに完全修飾クラス名を入れるとコードが表示されます。</p>

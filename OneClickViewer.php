@@ -3,181 +3,181 @@ class OneClickViewer
 {
     /**
      * The path of autoloader.
-     * 
-     * @var string 
+     *
+     * @var string
      */
     protected $autoloader = "";
 
     /**
      * The path of style sheet.
-     * 
+     *
      * @var string
      */
     protected $cssPath = "style.css";
 
     /**
      * Html head tag.
-     * 
+     *
      * @var string
      */
     protected $head = "";
 
     /**
      * Fully qualified class name or path from query string.
-     * 
+     *
      * @var string
      */
     protected $classNameOrPath = "";
 
     /**
      * Url of this viewer with query string.
-     * 
+     *
      * @var string
      */
     protected $urlWithQuery = "";
 
     /**
      * Url of this viewr without querys string.
-     * 
+     *
      * @var string
      */
     protected $urlWithoutQuery = "";
 
     /**
      * Current php file path.
-     * 
+     *
      * @var string
      */
     protected $currentFilePath = "";
 
     /**
      * Current php code.
-     * 
+     *
      * @var string
      */
     protected $code = "";
 
     /**
      * Current class name.
-     * 
+     *
      * @var string
      */
     protected $currentClass = "";
 
     /**
      * Parent class of current class.
-     * 
+     *
      * @var string
      */
     protected $parentClass = "";
 
     /**
      * Current namespace.
-     * 
+     *
      * @var string
      */
     protected $namespace = "";
 
     /**
      * The array of ancestors and traits.
-     * 
+     *
      * @var \ReflectionClass[]
      */
     protected $ancestorsAndTraits = [];
 
     /**
      * The array has class name as key and fully qualified name as value.
-     * 
+     *
      * @var array
      */
     protected $classArr = [];
 
     /**
      * The array of declared properties.
-     * 
+     *
      * @var string[]
      */
     protected $declaredProps = [];
 
     /**
      * The array of declared methods.
-     * 
+     *
      * @var string[]
      */
     protected $declaredMethods = [];
 
     /**
      * The array of declared constants.
-     * 
+     *
      * @var string[]
      */
     protected $declaredConsts = [];
 
     /**
      * The directory of current php file.
-     * 
+     *
      * @var string
      */
     protected $dirUri = "";
 
     /**
      * Html string of file link list.
-     * 
+     *
      * @var string
      */
     protected $fileList = "";
 
     /**
      * Html form tag.
-     * 
+     *
      * @var string
      */
     protected $form = "";
 
     /**
      * Html for output.
-     * 
+     *
      * @var string
      */
     protected $html = "";
 
     /**
      * if an error occured, true.
-     * 
+     *
      * @var bool
      */
     protected $occuredError = false;
 
     /**
      * Error message.
-     * 
+     *
      * @var string
      */
     protected $message = "";
 
     /**
      * Javascript path.
-     * 
+     *
      * @var string
      */
     protected $jsPath = "script.js";
 
     /**
      * Creat a new One Click Viewer instance.
-     * 
+     *
      * @param string $autoloader
      * @return void
      */
-    public function __construct($autoloader)
+    public function __construct()
     {
-        $this->autoloader = $autoloader;
+        $this->setAutoloaderPath();
 
         $this->urlWithQuery = (empty($_SERVER['HTTPS']) ? 'http://' : 'https://') . $_SERVER["HTTP_HOST"] . $_SERVER['REQUEST_URI'];
-        $this->urlWithoutQuery = (empty($_SERVER['HTTPS']) ? 'http://' : 'https://') . $_SERVER["HTTP_HOST"] . strtok($_SERVER["REQUEST_URI"],'?');
+        $this->urlWithoutQuery = (empty($_SERVER['HTTPS']) ? 'http://' : 'https://') . $_SERVER["HTTP_HOST"] . strtok($_SERVER["REQUEST_URI"], '?');
         $this->dirUrl = dirname($this->urlWithoutQuery . "/");
 
         $this->setHead();
-        $this->require($this->autoloader);
+        $this->requireAutoloader($this->autoloader);
 
         if (isset($_GET['q'])) {
             $this->classNameOrPath = $_GET['q'];
@@ -193,14 +193,27 @@ class OneClickViewer
     }
 
     /**
+     * Set path of autoloader.php.
+     *
+     * return void
+     */
+    protected function setAutoloaderPath()
+    {
+        $path = file_get_contents('.env');
+        preg_match('/AUTOLOADERPATH=.+/', $path, $match);
+
+        $this->autoloader = $match ? str_replace('\\', '/', str_replace('AUTOLOADERPATH=', '', $path)) : '';
+    }
+
+    /**
      * Make html head tag.
-     * 
+     *
      * return void
      */
     protected function setHead()
     {
         $cssPath = $this->dirUri . $this->cssPath;
-        $head =<<<HEAD
+        $head = <<<HEAD
 <head>
     <meta charset="utf-8">
     <title>One Click Viewer</title>
@@ -212,15 +225,15 @@ HEAD;
 
     /**
      * Require autoloader.php.
-     * 
+     *
      * @param string $autoloader
      * return void
      */
-    protected function require($autoloader)
+    protected function requireAutoloader($autoloader)
     {
         if (file_exists($autoloader)) {
             try {
-                require($autoloader);
+                require $autoloader;
             } catch (Exception $e) {
                 $this->message = "invalid file path.";
                 $this->occuredError = true;
@@ -233,14 +246,14 @@ HEAD;
 
     /**
      * Make html form tag.
-     * 
+     *
      * return boid
      */
     protected function setForm()
     {
         $phpSelf = basename($_SERVER['PHP_SELF']);
-        $value = (!empty($this->namespace) and !empty($this->currentClass)) ? $this->namespace.'\\'.$this->currentClass : '';
-        $form =<<<FORM
+        $value = (!empty($this->namespace) and !empty($this->currentClass)) ? $this->namespace . '\\' . $this->currentClass : '';
+        $form = <<<FORM
 <form action="$this->urlWithoutQuery" method="GET">
     <input type="text" name="q" value="$value" size="60" class="ns">
     <button>SHOW</button>
@@ -251,12 +264,12 @@ FORM;
 
     /**
      * make html to output.
-     * 
+     *
      * return $this
      */
     public function html()
     {
-        if (! $this->occuredError) {
+        if (!$this->occuredError) {
             $this->setDirUri();
             $this->setParentClass();
             $this->setAncestorsAndTraits();
@@ -280,7 +293,7 @@ FORM;
 
             $jsLink = $this->jsLink();
 
-            $this->html =<<<BODY
+            $this->html = <<<BODY
 $this->head
 <body>
     <div class="container">
@@ -306,7 +319,7 @@ BODY;
             $head = $this->head;
             $message = $this->message;
             $form = $this->form;
-            $this->html =<<<BODY
+            $this->html = <<<BODY
 $this->head
 <body>
     <div class="container">
@@ -320,7 +333,7 @@ $this->head
 </body>
 BODY;
         }
-        $this->html =<<<HTML
+        $this->html = <<<HTML
 <html>
     $this->html
 </html>
@@ -330,7 +343,7 @@ HTML;
 
     /**
      * Set a php code.
-     * 
+     *
      * return void
      */
     protected function setCode()
@@ -353,7 +366,7 @@ HTML;
 
     /**
      * Set directory URI wrapped html span.
-     * 
+     *
      * return void
      */
     protected function setDirUri()
@@ -368,7 +381,7 @@ HTML;
 
     /**
      * Set current class name.
-     * 
+     *
      * return void
      */
     protected function setCurrentClass()
@@ -381,7 +394,7 @@ HTML;
 
     /**
      * Set current namespace.
-     * 
+     *
      * return void
      */
     protected function setNamespace()
@@ -394,7 +407,7 @@ HTML;
 
     /**
      * Set parent class name of current class.
-     * 
+     *
      * return void
      */
     protected function setParentClass()
@@ -407,7 +420,7 @@ HTML;
 
     /**
      * Set ancestors and traits.
-     * 
+     *
      * return void
      */
     protected function setAncestorsAndTraits()
@@ -431,11 +444,9 @@ HTML;
         $this->ancestorsAndTraits = array_reverse($this->ancestorsAndTraits);
     }
 
-
-
     /**
      * Set declared peroperties.
-     * 
+     *
      * return void
      */
     protected function setDeclaredProps()
@@ -450,7 +461,7 @@ HTML;
 
     /**
      * Set declared methods.
-     * 
+     *
      * return void
      */
     protected function setDeclaredMethods()
@@ -465,7 +476,7 @@ HTML;
 
     /**
      * Set declared constants.
-     * 
+     *
      * return void
      */
     protected function setDeclaredConsts()
@@ -480,7 +491,7 @@ HTML;
     /**
      * Replace use statements.
      * use Foo\Bar\Class( as Alias) -> use <a href="URL?q=Foo\Bar\Class">Foo\Bar\Class( as Alias)</a>
-     * 
+     *
      * return $this
      */
     protected function replaceClassesInUse()
@@ -494,7 +505,7 @@ HTML;
             preg_match_all('/use ([\w\\\]+?);/', $usesStr, $match_uses);
             $classes_with_ns = $match_uses[1];
             $replace_uses_str = $usesStr;
-    
+
             foreach ($classes_with_ns as $class_with_ns) {
                 try {
                     $path = (new ReflectionClass($class_with_ns))->getFileName();
@@ -504,7 +515,7 @@ HTML;
                         $this->classArr[$end] = $class_with_ns;
 
                         $replace_uses_str = preg_replace(
-                            '/'.preg_quote($class_with_ns).';/', 
+                            '/' . preg_quote($class_with_ns) . ';/',
                             "<a href=\"$this->urlWithoutQuery?q=$class_with_ns\" role=\"link\">$class_with_ns</a>;", $replace_uses_str
                         );
                     }
@@ -521,7 +532,7 @@ HTML;
 
                 try {
                     if ((new ReflectionClass($class_with_ns))->getFileName()) {
-                        
+
                         $replace_uses_str = str_replace(
                             "$class_with_ns as $alias",
                             "<a href=\"$this->urlWithoutQuery?q=$class_with_ns\" role=\"link\">$class_with_ns as $alias</a>",
@@ -537,13 +548,13 @@ HTML;
 
     /**
      * Replace all classes except in use statements.
-     * 
+     *
      * return $this
      */
     protected function replaceOtherClasses()
     {
         preg_match(
-            '/^(class|abstract class|final class|interface|trait) '.$this->currentClass.'[\s\S]+/m',
+            '/^(class|abstract class|final class|interface|trait) ' . $this->currentClass . '[\s\S]+/m',
             $this->code,
             $matchExceptUses
         );
@@ -554,11 +565,11 @@ HTML;
             $this->code,
             $matchClasses
         );
-        
+
         $classes = array_unique($matchClasses[1]);
         $idx = array_search($this->currentClass, $classes);
         array_splice($classes, $idx, 1);
-        
+
         $replaceExceptUses = $matchExceptUses;
 
         foreach ($classes as $class) {
@@ -566,13 +577,13 @@ HTML;
                 $fullyQualifiedName = preg_quote($this->classArr[$class]);
 
                 $replaceExceptUses = preg_replace(
-                    '/(\\\)?'.$fullyQualifiedName.'(;|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
+                    '/(\\\)?' . $fullyQualifiedName . '(;|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
                     "<a href=\"$this->urlWithoutQuery?q=$1$fullyQualifiedName\" role=\"link\">$fullyQualifiedName</a>$2",
                     $replaceExceptUses
                 );
 
                 $replaceExceptUses = preg_replace(
-                    '/(?<!\\\)'.$class.'(;|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
+                    '/(?<!\\\)' . $class . '(;|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
                     "<a href=\"$this->urlWithoutQuery?q=$fullyQualifiedName\" role=\"link\">$class</a>$1",
                     $replaceExceptUses
                 );
@@ -596,9 +607,9 @@ HTML;
                         //fully qualified names
                         if ((new ReflectionClass($class))->getFileName()) {
                             $class = preg_quote($class);
-                            
+
                             $replaceExceptUses = preg_replace(
-                                '/'.$class.'(:|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
+                                '/' . $class . '(:|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
                                 "<a href=\"$this->urlWithoutQuery?q=$class\" role=\"link\">$class</a>$1",
                                 $replaceExceptUses
                             );
@@ -613,16 +624,16 @@ HTML;
 
     /**
      * Replace declared methods.
-     * 
+     *
      * return $this
      */
     protected function replaceDeclaredMethods()
     {
         preg_match_all('/(public|protected|private) (static )?function(.+?\);|[\s\S]+?^ {4}})/m', $this->code, $matchMethodsStr);
-        
+
         if (isset($matchMethodsStr[0])) {
             $methodsStr = $matchMethodsStr[0];
-            
+
             foreach ($methodsStr as $methodStr) {
                 preg_match_all('/\\\?([A-Z][a-z]+\\\?)+/', $methodStr, $matchMethodClasses);
                 $methodClasses = array_unique($matchMethodClasses[0]);
@@ -630,25 +641,25 @@ HTML;
                 if ($idx !== false) {
                     array_splice($methodClasses, $idx, 1);
                 }
-        
+
                 $replaceMethod = $methodStr;
                 foreach ($methodClasses as $methodClass) {
                     if (isset($this->classArr[$methodClass])) {
                         $class = $this->classArr[$methodClass];
                         $replaceMethod = preg_replace(
-                            '/(?<![\w\\\])'.$methodClass.'( |\(|\)|,|\]|;|::|[\r\n])/', 
+                            '/(?<![\w\\\])' . $methodClass . '( |\(|\)|,|\]|;|::|[\r\n])/',
                             "<a href=\"$this->urlWithoutQuery?q=$class\" role=\"link\">$methodClass</a>$1",
                             $replaceMethod
                         );
                     } else {
                         try {
-                            $methodClassWithNamespace = $this->namespace.'\\'.trim($methodClass, '\\');
+                            $methodClassWithNamespace = $this->namespace . '\\' . trim($methodClass, '\\');
                             if ((new ReflectionClass($methodClassWithNamespace))->getFileName()) {
                                 $replaceMethod = preg_replace(
-                                    '/(?<![\w\\\])'.preg_quote($methodClass).'( |\(|\)|,|\]|;|::|[\r\n])/',
+                                    '/(?<![\w\\\])' . preg_quote($methodClass) . '( |\(|\)|,|\]|;|::|[\r\n])/',
                                     "<a href=\"$this->urlWithoutQuery?q=$methodClassWithNamespace\" role=\"link\">$methodClass</a>$1",
                                     $replaceMethod);
-                                
+
                                 $this->classArr[trim($methodClass, '\\')] = $methodClassWithNamespace;
                             }
                         } catch (Exception $e) {}
@@ -662,7 +673,7 @@ HTML;
 
     /**
      * Add <span id="delaredName"> </span> above documentations or declarations.
-     * 
+     *
      * return $this
      */
     protected function addSpanIds()
@@ -685,16 +696,16 @@ HTML;
 
     /**
      * Replace called properties.
-     * $this->prop, Class::$prop, static::$prop and self::$prop -> 
+     * $this->prop, Class::$prop, static::$prop and self::$prop ->
      * ($this->|Class::$|static::$|self::$)<a href="URL#prop" role="link">prop</a>
-     * 
+     *
      * return $this
      */
     protected function replaceCalledProps()
     {
         foreach ($this->declaredProps as $prop) {
             $this->code = preg_replace(
-                '/(\$this\-&gt;|'.$this->currentClass.'::\$|static::\$|self::\$)'.$prop.'(,|:|;|\)| |\.|\[|\]|\-)/',
+                '/(\$this\-&gt;|' . $this->currentClass . '::\$|static::\$|self::\$)' . $prop . '(,|:|;|\)| |\.|\[|\]|\-)/',
                 "$1<a href=\"$this->urlWithQuery#$prop\" role=\"link\">$prop</a>$2",
                 $this->code
             );
@@ -704,16 +715,16 @@ HTML;
 
     /**
      * Replace called methods.
-     * $this->method, Class::method, static::method and self::method -> 
+     * $this->method, Class::method, static::method and self::method ->
      * ($this->|Class::|static::|self::)<a href="URL#method" role="link">method</a>
-     * 
+     *
      * return $this
      */
     protected function replaceCalledMethods()
     {
         foreach ($this->declaredMethods as $method) {
             $this->code = preg_replace(
-                '/(\$this\-&gt;|' . $this->currentClass . '::|static::|self::)'.$method.'(\()/',
+                '/(\$this\-&gt;|' . $this->currentClass . '::|static::|self::)' . $method . '(\()/',
                 "$1<a href=\"$this->urlWithQuery#$method\" role=\"link\">$method</a>$2",
                 $this->code
             );
@@ -723,16 +734,16 @@ HTML;
 
     /**
      * Replace called constants.
-     * $this->const, Class::const, static::const and self::const -> 
+     * $this->const, Class::const, static::const and self::const ->
      * ($this->|Class::|static::|self::)<a href="URL#const" role="link">const</a>
-     * 
+     *
      * return $this
      */
     protected function replaceCalledConsts()
     {
         foreach ($this->declaredConsts as $const) {
             $this->code = preg_replace(
-                '/(\$this\-&gt;|'.$this->currentClass.'::|static::|self::)'.$const.'(,|:|;|\)| |\.|\[|\]|\-)/',
+                '/(\$this\-&gt;|' . $this->currentClass . '::|static::|self::)' . $const . '(,|:|;|\)| |\.|\[|\]|\-)/',
                 "$1<a href=\"$this->urlWithQuery#$const\" role=\"link\">$const</a>$2",
                 $this->code
             );
@@ -742,24 +753,24 @@ HTML;
 
     /**
      * Replace extended properties.
-     * 
+     *
      * return $this
      */
     protected function replaceExtendedProps()
     {
         preg_match_all(
             '/(this\-&gt;|' . $this->currentClass . '::\$|static::\$|self::\$)(\w+?)(,|:|;|\)| |\.|\[|\]|\-)/',
-            $this->code, 
+            $this->code,
             $matchExtendedProps
         );
         $extendedProps = array_unique($matchExtendedProps[2]);
-        
+
         foreach ($extendedProps as $extendedProp) {
             foreach ($this->ancestorsAndTraits as $ancestorOrTrait) {
                 if ($ancestorOrTrait->hasProperty($extendedProp)) {
                     $classWithNamespace = $ancestorOrTrait->getName();
                     $this->code = preg_replace(
-                        '/(this\-&gt;|' . $this->currentClass . '::\$|static::\$|self::\$)'.$extendedProp.'(,|:|;|\)| |\.|\[|\]|\-)/',
+                        '/(this\-&gt;|' . $this->currentClass . '::\$|static::\$|self::\$)' . $extendedProp . '(,|:|;|\)| |\.|\[|\]|\-)/',
                         "$1<a href=\"$this->urlWithoutQuery?q=$classWithNamespace#$extendedProp\" role=\"link\">$extendedProp</a>$2",
                         $this->code
                     );
@@ -772,7 +783,7 @@ HTML;
 
     /**
      * Replace extended methods.
-     * 
+     *
      * return $this
      */
     protected function replaceExtendedMethods()
@@ -783,13 +794,13 @@ HTML;
             $matchExtendedMethods
         );
         $extendedMethods = array_unique($matchExtendedMethods[2]);
-        
+
         foreach ($extendedMethods as $extendedMethod) {
             foreach ($this->ancestorsAndTraits as $ancestorOrTrait) {
                 if ($ancestorOrTrait->hasMethod($extendedMethod)) {
                     $classWithNamespace = $ancestorOrTrait->getName();
                     $this->code = preg_replace(
-                        '/(this\-&gt;|' . $this->currentClass . '::|static::|self::)'.$extendedMethod.'(\()/',
+                        '/(this\-&gt;|' . $this->currentClass . '::|static::|self::)' . $extendedMethod . '(\()/',
                         "$1<a href=\"$this->urlWithoutQuery?q=$classWithNamespace#$extendedMethod\" role=\"link\">$extendedMethod</a>$2",
                         $this->code
                     );
@@ -802,14 +813,14 @@ HTML;
 
     /**
      * Replace extended constants.
-     * 
+     *
      * return $this
      */
     protected function replaceExtendedConsts()
     {
         preg_match_all(
             '/(this\-&gt;|' . $this->currentClass . '::|static::|self::)(\w+?)(,|:|;|\)| |\.|\[|\]|\-)/',
-            $this->code, 
+            $this->code,
             $matchExtendedConsts
         );
         $extendedConsts = array_unique($matchExtendedConsts[2]);
@@ -819,7 +830,7 @@ HTML;
                 if ($ancestorOrTrait->hasProperty($extendedConst)) {
                     $classWithNamespace = $ancestorOrTrait->getName();
                     $this->code = preg_replace(
-                        '/(this\-&gt;|' . $this->currentClass . '::|static::|self::)'.$extendedConst.'(,|:|;|\)| |\.|\[|\]|\-)/',
+                        '/(this\-&gt;|' . $this->currentClass . '::|static::|self::)' . $extendedConst . '(,|:|;|\)| |\.|\[|\]|\-)/',
                         "$1<a href=\"$this->urlWithoutQuery?q=$classWithNamespace#$extendedConst\" role=\"link\">$extendedConst</a>$2",
                         $this->code
                     );
@@ -832,9 +843,9 @@ HTML;
 
     /**
      * Replace parent.
-     * 
+     *
      * parent to <a href="Url?q=Namespace\Parent">parent</a>
-     * 
+     *
      * return $this
      */
     protected function replaceParentPropsMethodsConsts()
@@ -844,7 +855,7 @@ HTML;
                 $parentWithNamespace = $this->classArr[$this->parentClass];
             } else {
                 try {
-                    $parentWithNamespace = (new ReflectionClass($this->namespace. '\\' . $this->parentClass))->getName();
+                    $parentWithNamespace = (new ReflectionClass($this->namespace . '\\' . $this->parentClass))->getName();
                 } catch (Exception $e) {}
             }
 
@@ -867,7 +878,7 @@ HTML;
 
     /**
      * Create html table is inserted code.
-     * 
+     *
      * return void
      */
     protected function code2Table()
@@ -876,25 +887,25 @@ HTML;
         $i = 1;
         $code = "";
         foreach ($lines as $line) {
-            $code .= '<tr><td><pre><span class="num">'.($i++).'<span></pre></td><td><pre>'.$line.'</pre></td></tr>';
+            $code .= '<tr><td><pre><span class="num">' . ($i++) . '<span></pre></td><td><pre>' . $line . '</pre></td></tr>';
         }
         $this->code = "<table><tbody>$code</tbody></table>";
     }
 
     /**
      * Set html string of file list.
-     * 
+     *
      * return void
      */
     protected function setFileList()
     {
         $fileList = "";
-        foreach (glob(dirname($this->currentFilePath).'/*.php') as $filePath) {
+        foreach (glob(dirname($this->currentFilePath) . '/*.php') as $filePath) {
             $baseName = basename($filePath);
             $fileList .= "<div><pre><span>    </span><a href=\"$this->urlWithoutQuery?q=$filePath\">$baseName</a></pre></div>\n";
         }
 
-        $this->fileList =<<<LIST
+        $this->fileList = <<<LIST
 <div class="toggle">
     <pre><span>Files</span><span class="toggle">[▶]</span></pre>
 </div>
@@ -906,7 +917,7 @@ LIST;
 
     /**
      * Creat html script of javascript.
-     * 
+     *
      * return string
      */
     protected function jsLink()
@@ -916,7 +927,7 @@ LIST;
 
     /**
      * Output html.
-     * 
+     *
      * @param string $parts
      * return void
      */

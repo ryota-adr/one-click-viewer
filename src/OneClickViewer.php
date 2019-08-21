@@ -13,7 +13,7 @@ class OneClickViewer
      *
      * @var string
      */
-    protected $cssPath = "style.css";
+    protected $cssPath = "src/style.css";
 
     /**
      * Html head tag.
@@ -160,17 +160,17 @@ class OneClickViewer
      *
      * @var string
      */
-    protected $jsPath = "script.js";
+    protected $jsPath = "src/script.js";
 
     /**
      * Creat a new One Click Viewer instance.
      *
-     * @param string $autoloader
+     * @param string $envPath
      * @return void
      */
-    public function __construct()
+    public function __construct($envPath = '.env')
     {
-        $this->setAutoloaderPath();
+        $this->setAutoloaderPath($envPath);
 
         $this->urlWithQuery = (empty($_SERVER['HTTPS']) ? 'http://' : 'https://') . $_SERVER["HTTP_HOST"] . $_SERVER['REQUEST_URI'];
         $this->urlWithoutQuery = (empty($_SERVER['HTTPS']) ? 'http://' : 'https://') . $_SERVER["HTTP_HOST"] . strtok($_SERVER["REQUEST_URI"], '?');
@@ -195,11 +195,12 @@ class OneClickViewer
     /**
      * Set path of autoloader.php.
      *
+     * @param string $envPath
      * return void
      */
-    protected function setAutoloaderPath()
+    protected function setAutoloaderPath($envPath)
     {
-        $path = file_get_contents('.env');
+        $path = file_get_contents($envPath);
         preg_match('/AUTOLOADERPATH=.+/', $path, $match);
 
         $this->autoloader = $match ? str_replace('\\', '/', str_replace('AUTOLOADERPATH=', '', $path)) : '';

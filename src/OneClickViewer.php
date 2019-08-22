@@ -584,7 +584,7 @@ HTML;
                 );
 
                 $replaceExceptUses = preg_replace(
-                    '/(?<!\\\)' . $class . '(;|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
+                    '/(?<![\\\a-zA-Z])' . $class . '(;|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
                     "<a href=\"$this->urlWithoutQuery?q=$fullyQualifiedName\" role=\"link\">$class</a>$1",
                     $replaceExceptUses
                 );
@@ -598,7 +598,7 @@ HTML;
                         $fullyQualifiedName = preg_quote($fullyQualifiedName);
 
                         $replaceExceptUses = preg_replace(
-                            '/' . preg_quote($class) . '(;|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
+                            '/(?<![\\\a-zA-Z])' . preg_quote($class) . '(;|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
                             "<a href=\"$this->urlWithoutQuery?q=$fullyQualifiedName\" role=\"link\">$class</a>$1",
                             $replaceExceptUses
                         );

@@ -287,7 +287,8 @@ FORM;
                 ->replaceExtendedProps()
                 ->replaceExtendedMethods()
                 ->replaceExtendedConsts()
-                ->replaceParentPropsMethodsConsts();
+                ->replaceParentPropsMethodsConsts()
+                ->replaceInternalFunctions();
 
             $this->code2Table();
             $this->setFileList();
@@ -874,6 +875,30 @@ HTML;
                 $this->code
             );
         }
+        return $this;
+    }
+
+    /**
+     * Replace internal functions.
+     * 
+     * return $this
+     */
+    protected function replaceInternalFunctions()
+    {
+        preg_match_all('/(\(|\[| )([a-z]\w+)\(/', $this->code, $matches);
+        $funcs = array_unique($matches[2]);
+        foreach($funcs as $func) {
+            if(function_exists($func) && (new ReflectionFunction($func))->isInternal()) {
+                $replacedFunc = str_replace('_', '-', $func);
+                preg_match_all('/(\(|\[| )' . '(' . $func . ')(\()/', $this->code, $match);
+                
+                $this->code = preg_replace(
+                    '/(\(|\[| )' . '(' . $func . ')(\()/',
+                    '$1' . '<a href="https://www.php.net/manual/ja/function.' . $replacedFunc . '.php">' . $func . '</a>$3',
+                    $this->code);
+            }
+        }
+
         return $this;
     }
 

@@ -2,18 +2,30 @@
 class OneClickViewer
 {
     /**
-     * The path of autoloader.
+     * The paths of autoloader.
      *
-     * @var string
+     * @var string[]
      */
-    protected $autoloader = "";
+    protected $autoloaders = [];
+
+    /**
+     * @var bool[]
+     */
+    protected $wasRequired = [];
+
+    /**
+     * @var string[]
+     */
+    protected $requiredAutoloaders = [];
 
     /**
      * The path of style sheet.
      *
      * @var string
      */
-    protected $cssPath = "src/style.css";
+    protected $cssPath = "src/css/style.css";
+
+    protected $fontsPath = "src/css/icomoon/style.css";
 
     /**
      * Html head tag.
@@ -160,7 +172,7 @@ class OneClickViewer
      *
      * @var string
      */
-    protected $jsPath = "src/script.js";
+    protected $jsPath = "src/js/script.js";
 
     /**
      * Creat a new One Click Viewer instance.
@@ -170,14 +182,14 @@ class OneClickViewer
      */
     public function __construct($envPath = '.env')
     {
-        $this->setAutoloaderPath($envPath);
+        $this->setAutoloaderPaths($envPath);
 
         $this->urlWithQuery = (empty($_SERVER['HTTPS']) ? 'http://' : 'https://') . $_SERVER["HTTP_HOST"] . $_SERVER['REQUEST_URI'];
         $this->urlWithoutQuery = (empty($_SERVER['HTTPS']) ? 'http://' : 'https://') . $_SERVER["HTTP_HOST"] . strtok($_SERVER["REQUEST_URI"], '?');
         $this->dirUrl = dirname($this->urlWithoutQuery . "/");
 
         $this->setHead();
-        $this->requireAutoloader($this->autoloader);
+        $this->requireAutoloader($this->autoloaders);
 
         if (isset($_GET['q'])) {
             $this->classNameOrPath = $_GET['q'];
@@ -198,12 +210,12 @@ class OneClickViewer
      * @param string $envPath
      * return void
      */
-    protected function setAutoloaderPath($envPath)
+    protected function setAutoloaderPaths($envPath)
     {
         $path = file_get_contents($envPath);
         preg_match('/AUTOLOADERPATH=.+/', $path, $match);
 
-        $this->autoloader = $match ? str_replace('\\', '/', str_replace('AUTOLOADERPATH=', '', $path)) : '';
+        $this->autoloaders = $match ? explode(',', str_replace('\\', '/', str_replace('AUTOLOADERPATH=', '', $path))) : [];
     }
 
     /**
@@ -213,12 +225,12 @@ class OneClickViewer
      */
     protected function setHead()
     {
-        $cssPath = $this->dirUri . $this->cssPath;
         $head = <<<HEAD
 <head>
     <meta charset="utf-8">
     <title>One Click Viewer</title>
-    <link rel="stylesheet" href="$cssPath">
+    <link rel="stylesheet" href="$this->cssPath">
+    <link rel="stylesheet" href="$this->fontsPath">
 </head>
 HEAD;
         $this->head = $head;
@@ -227,21 +239,29 @@ HEAD;
     /**
      * Require autoloader.php.
      *
-     * @param string $autoloader
+     * @param string[] $autoloaders
      * return void
      */
-    protected function requireAutoloader($autoloader)
+    protected function requireAutoloader($autoloaders)
     {
-        if (file_exists($autoloader)) {
-            try {
-                require $autoloader;
-            } catch (Exception $e) {
+        foreach ($autoloaders as $autoloader) {
+            if (file_exists($autoloader)) {
+                try {
+                    require $autoloader;
+                    $this->wasRequired[] = true;
+                    $this->requiredAutoloaders[] = $autoloader;
+                } catch (Exception $e) {
+                    $this->wasRequired[] = false;
+                }
+            }
+        }
+        
+        foreach ($this->wasRequired as $wasRequired) {
+            if ($wasRequired === false) {
                 $this->message = "invalid file path.";
                 $this->occuredError = true;
+                break;
             }
-        } else {
-            $this->message = "invalid file path.";
-            $this->occuredError = true;
         }
     }
 
@@ -256,8 +276,12 @@ HEAD;
         $value = (!empty($this->namespace) and !empty($this->currentClass)) ? $this->namespace . '\\' . $this->currentClass : '';
         $form = <<<FORM
 <form action="$this->urlWithoutQuery" method="GET">
-    <input type="text" name="q" value="$value" size="60" class="ns">
-    <button>SHOW</button>
+    <div class="inline-block" role="input-text">
+        <input type="text" name="q" value="$value" size="60" class="ns">
+        <button>SHOW</button>
+    </div>
+    <div class="inline-block" role="toggle-input-text">
+    </div>
 </form>
 FORM;
         $this->form = $form;
@@ -271,7 +295,7 @@ FORM;
     public function html()
     {
         if (!$this->occuredError) {
-            $this->setDirUri();
+            //$this->setDirUri();
             $this->setParentClass();
             $this->setAncestorsAndTraits();
             $this->setDeclaredProps();
@@ -374,11 +398,16 @@ HTML;
     protected function setDirUri()
     {
         $dir = dirname($this->currentFilePath);
-        $dirArr = explode('/', $this->autoloader);
-        $baseDir = $dirArr[array_search('vendor', $dirArr) - 1];
-        $replativeDir = $baseDir . explode($baseDir, $dir, 2)[1];
+        var_dump($dir);
 
-        $this->dirUri = "<span class=\"dir\" data-dir=\"$dir\">$replativeDir</span>";
+        foreach ($this->requiredAutoloaders as $requiredAutoloader) {
+            $dirArr = explode('/', $requiredAutoloader);
+            $baseDir = $dirArr[array_search('vendor', $dirArr) - 1];
+            var_dump($baseDir);
+            $replativeDir = $baseDir . explode($baseDir, $dir, 2)[1];
+
+            $this->dirUri .= "<div class=\"dir\" data-dir=\"$dir\">$replativeDir</div>";
+        }
     }
 
     /**
@@ -933,7 +962,10 @@ HTML;
 
         $this->fileList = <<<LIST
 <div class="toggle">
-    <pre><span>Files</span><span class="toggle">[▶]</span></pre>
+        <span>Files</span>
+        <span class="toggle">
+            <span class="icon-chevron-right"></span>
+        </span>
 </div>
 <div class="phpfiles" style="display: none;">
     $fileList

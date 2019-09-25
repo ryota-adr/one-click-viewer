@@ -14,23 +14,25 @@
         window.open();
     }, false);*/
 
-    var toggle = document.querySelector("span.toggle");
-    toggle.addEventListener("click", function () {
-        var files = document.querySelector("div.phpfiles");
-        if (files.style.display === "none") {
-            toggle.innerHTML = '<span class="icon-chevron-down"></span>';
-            files.style.display = "block";
-        } else {
-            toggle.innerHTML = '<span class="icon-chevron-right"></span>';
-            files.style.display = "none";
-        }
-    });
+    const toggle = document.querySelector("span.toggle");
+    if (toggle) {
+        toggle.addEventListener("click", function () {
+            const files = document.querySelector("div.phpfiles");
+            if (files.style.display === "none") {
+                toggle.innerHTML = '<span class="icon-chevron-down"></span>';
+                files.style.display = "block";
+            } else {
+                toggle.innerHTML = '<span class="icon-chevron-right"></span>';
+                files.style.display = "none";
+            }
+        });
+    }
 
     var targetedArray = [];
     function targetNameChange() {
         if (location.hash) {
-            var class_name = location.hash.replace('#', '');
-            var target_name = document.querySelector("span." + class_name);
+            const class_name = location.hash.replace('#', '');
+            const target_name = document.querySelector("span." + class_name);
 
             targetedArray.forEach(function (elem) {
                 elem.style.backgroundColor = "";
@@ -50,8 +52,8 @@
     targetNameChange();
 
     //change background color of links
-    var links = document.querySelectorAll('[role="link"]');
-    var pressedLinks = [];
+    const links = document.querySelectorAll('[role="link"]');
+    const pressedLinks = [];
     links.forEach(function (link) {
         link.addEventListener("mouseup", function (e) {
             if (e.which === 1 || e.which === 2) {
@@ -70,7 +72,16 @@
         });
     });
 
-    function toggleInputText(evt) {
-        
+    const toggleButton = document.querySelector('button[role="toggle_input_text"]');
+    const inputTextAndButton = document.querySelector('div[role="input_text_and_button"]');
+    function toggleInputTextAndButton(evt) {
+        if (inputTextAndButton.classList.contains('none')) {
+            inputTextAndButton.classList.remove('none');
+            evt.target.classList.replace('icon-chevron-right', 'icon-chevron-left');
+        } else {
+            inputTextAndButton.classList.add('none');
+            evt.target.classList.replace('icon-chevron-left', 'icon-chevron-right');
+        }
     }
+    toggleButton.addEventListener('click', toggleInputTextAndButton);
 })();

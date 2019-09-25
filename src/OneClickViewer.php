@@ -19,76 +19,67 @@ class OneClickViewer
     protected $requiredAutoloaders = [];
 
     /**
-     * The path of style sheet.
-     *
-     * @var string
-     */
-    protected $cssPath = "src/css/style.css";
-
-    protected $fontsPath = "src/css/icomoon/style.css";
-
-    /**
      * Html head tag.
      *
      * @var string
      */
-    protected $head = "";
+    protected $head = '';
 
     /**
      * Fully qualified class name or path from query string.
      *
      * @var string
      */
-    protected $classNameOrPath = "";
+    protected $classNameOrPath = '';
 
     /**
      * Url of this viewer with query string.
      *
      * @var string
      */
-    protected $urlWithQuery = "";
+    protected $urlWithQuery = '';
 
     /**
      * Url of this viewr without querys string.
      *
      * @var string
      */
-    protected $urlWithoutQuery = "";
+    protected $urlWithoutQuery = '';
 
     /**
      * Current php file path.
      *
      * @var string
      */
-    protected $currentFilePath = "";
+    protected $currentFilePath = '';
 
     /**
      * Current php code.
      *
      * @var string
      */
-    protected $code = "";
+    protected $code = '';
 
     /**
      * Current class name.
      *
      * @var string
      */
-    protected $currentClass = "";
+    protected $currentClass = '';
 
     /**
      * Parent class of current class.
      *
      * @var string
      */
-    protected $parentClass = "";
+    protected $parentClass = '';
 
     /**
      * Current namespace.
      *
      * @var string
      */
-    protected $namespace = "";
+    protected $namespace = '';
 
     /**
      * The array of ancestors and traits.
@@ -130,21 +121,23 @@ class OneClickViewer
      *
      * @var string
      */
-    protected $dirUri = "";
+    protected $dirUri = '';
 
     /**
      * Html string of file link list.
      *
      * @var string
      */
-    protected $fileList = "";
+    protected $fileList = '';
 
     /**
      * Html form tag.
      *
      * @var string
      */
-    protected $form = "";
+    protected $form = '';
+
+    protected $inputValue = '';
 
     /**
      * Html for output.
@@ -188,18 +181,17 @@ class OneClickViewer
         $this->urlWithoutQuery = (empty($_SERVER['HTTPS']) ? 'http://' : 'https://') . $_SERVER["HTTP_HOST"] . strtok($_SERVER["REQUEST_URI"], '?');
         $this->dirUrl = dirname($this->urlWithoutQuery . "/");
 
-        $this->setHead();
         $this->requireAutoloader($this->autoloaders);
-
+        
         if (isset($_GET['q'])) {
             $this->classNameOrPath = $_GET['q'];
             $this->setCode();
             $this->setCurrentClass();
             $this->setNamespace();
-            $this->setForm();
+            $this->setInputValue();
         } else {
             $this->occuredError = true;
-            $this->setForm();
+            $this->setInputValue();
             $this->message = "Invalid class name or path.";
         }
     }
@@ -216,24 +208,6 @@ class OneClickViewer
         preg_match('/AUTOLOADERPATH=.+/', $path, $match);
 
         $this->autoloaders = $match ? explode(',', str_replace('\\', '/', str_replace('AUTOLOADERPATH=', '', $path))) : [];
-    }
-
-    /**
-     * Make html head tag.
-     *
-     * return void
-     */
-    protected function setHead()
-    {
-        $head = <<<HEAD
-<head>
-    <meta charset="utf-8">
-    <title>One Click Viewer</title>
-    <link rel="stylesheet" href="$this->cssPath">
-    <link rel="stylesheet" href="$this->fontsPath">
-</head>
-HEAD;
-        $this->head = $head;
     }
 
     /**
@@ -265,26 +239,15 @@ HEAD;
         }
     }
 
-    /**
-     * Make html form tag.
-     *
-     * return boid
-     */
-    protected function setForm()
+    public function getInputValue()
+    {
+        return $this->inputValue;
+    }
+
+    protected function setInputValue()
     {
         $phpSelf = basename($_SERVER['PHP_SELF']);
-        $value = (!empty($this->namespace) and !empty($this->currentClass)) ? $this->namespace . '\\' . $this->currentClass : '';
-        $form = <<<FORM
-<form action="$this->urlWithoutQuery" method="GET">
-    <div class="inline-block" role="input-text">
-        <input type="text" name="q" value="$value" size="60" class="ns">
-        <button>SHOW</button>
-    </div>
-    <div class="inline-block" role="toggle-input-text">
-    </div>
-</form>
-FORM;
-        $this->form = $form;
+        $this->inputValue = (!empty($this->namespace) && !empty($this->currentClass)) ? $this->namespace . '\\' . $this->currentClass : '';
     }
 
     /**
@@ -295,7 +258,7 @@ FORM;
     public function html()
     {
         if (!$this->occuredError) {
-            //$this->setDirUri();
+            $this->setDirUri();
             $this->setParentClass();
             $this->setAncestorsAndTraits();
             $this->setDeclaredProps();
@@ -317,53 +280,33 @@ FORM;
             $this->code2Table();
             $this->setFileList();
 
-            $jsLink = $this->jsLink();
-
             $this->html = <<<BODY
-$this->head
-<body>
-    <div class="container">
-        <div class="namespace">
-            $this->form
-        </div>
-        <div class="dir">
-            <pre>$this->dirUri</pre>
-        </div>
-        <div>
-            $this->fileList
-        </div>
-        <div>
-            $this->code
-        </div>
-        <div>
-            $jsLink
-        </div>
+<div class="container">
+    <div class="namespace">
+        $this->form
     </div>
-</body>
+    <div class="dir">
+        $this->dirUri
+    </div>
+    <div>
+        $this->fileList
+    </div>
+    <div>
+        $this->code
+    </div>
+</div>
 BODY;
         } else {
-            $head = $this->head;
-            $message = $this->message;
             $form = $this->form;
             $this->html = <<<BODY
-$this->head
-<body>
-    <div class="container">
-        <div class="namespace">
-            $this->form
-        </div>
-        <div class="message">
-           <pre>$this->message</pre>
-        </div>
+<div class="container">
+    <div class="message">
+       $this->message
     </div>
-</body>
+</div>
 BODY;
         }
-        $this->html = <<<HTML
-<html>
-    $this->html
-</html>
-HTML;
+
         return $this;
     }
 
@@ -398,16 +341,15 @@ HTML;
     protected function setDirUri()
     {
         $dir = dirname($this->currentFilePath);
-        var_dump($dir);
-
+        //dump($this->currentFilePath, $this->requiredAutoloaders);
+        /*
         foreach ($this->requiredAutoloaders as $requiredAutoloader) {
             $dirArr = explode('/', $requiredAutoloader);
             $baseDir = $dirArr[array_search('vendor', $dirArr) - 1];
-            var_dump($baseDir);
             $replativeDir = $baseDir . explode($baseDir, $dir, 2)[1];
 
             $this->dirUri .= "<div class=\"dir\" data-dir=\"$dir\">$replativeDir</div>";
-        }
+        }*/
     }
 
     /**
@@ -942,7 +884,7 @@ HTML;
         $i = 1;
         $code = "";
         foreach ($lines as $line) {
-            $code .= '<tr><td><pre><span class="num">' . ($i++) . '<span></pre></td><td><pre>' . $line . '</pre></td></tr>';
+            $code .= '<tr><td><div><span class="num">' . ($i++) . '<span></div></td><td><div>' . $line . '</div></td></tr>';
         }
         $this->code = "<table><tbody>$code</tbody></table>";
     }
@@ -957,7 +899,7 @@ HTML;
         $fileList = "";
         foreach (glob(dirname($this->currentFilePath) . '/*.php') as $filePath) {
             $baseName = basename($filePath);
-            $fileList .= "<div><pre><span>    </span><a href=\"$this->urlWithoutQuery?q=$filePath\">$baseName</a></pre></div>\n";
+            $fileList .= "<div><span>    </span><a href=\"$this->urlWithoutQuery?q=$filePath\">$baseName</a></div>\n";
         }
 
         $this->fileList = <<<LIST

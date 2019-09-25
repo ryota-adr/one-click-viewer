@@ -1,38 +1,36 @@
-div.namespace {
-    position: fixed; top: 0px; left: 0px;
+:root {
+    --default-font-size: 20px;
+    --default-font-family: Arial, Helvetica, sans-serif; 
+    --link-color: #515151;
+    --show-button-width: 80px;
+    --toggle-button-width: 35px;
 }
-div.container {
-    margin-top: 40px;
+body, table, div, span {
+    color: var(--link-color);
+    font-size: var(--default-font-size);
+    font-family: var(--default-font-family);
 }
-input.ns {
-    font-size: 1.2em;
-    margin-right: -6px;
+
+input {
+    font-size: var(--default-font-size);
     padding-left: 5px;
+    width: 100%;
 }
+
 button {
-    font-size: 1.2em;
+    font-size: var(--default-font-size);
 }
+
 table {
     border-spacing: 0px;
-}
-td {
-    vertical-align:top;
-}
-.num {
-    display: block;
-    text-align: center;
-    margin-right: 5px;
-    user-select: none;
-}
-pre {
-    --link-color: #515151;
-    color: var(--link-color);
-    font-family: Arial, Helvetica, sans-serif; 
-    font-size: 20px;
-    margin: 0;
     overflow-wrap: break-word; 
     white-space: pre-wrap; 
 }
+
+td {
+    vertical-align:top;
+}
+
 a {
     color: var(--link-color);
     text-decoration: none;
@@ -40,6 +38,31 @@ a {
 a:hover {
     text-decoration: underline;
 }
+
+.search_bar {
+    position: fixed; top: 0px; left: 0px;
+    width: 100%;
+}
+
+.show_button {
+    width: var(--show-button-width);
+}
+
+.toggle_button {
+    width: var(--toggle-button-width);
+}
+
+.container {
+    margin-top: 40px;
+}
+
+.num {
+    display: block;
+    text-align: center;
+    margin-right: 5px;
+    user-select: none;
+}
+
 div.dir {
     margin-bottom: 20px;
 }
@@ -56,4 +79,20 @@ span.toggle {
 }
 div.phpfiles {
     margin-bottom: 20px;
+}
+
+.flex {
+    display: flex!important;
+}
+
+.inline-block {
+    display: inline-block!important;
+}
+
+.none {
+    display: none!important;
+}
+
+.width100 {
+    width: 100%!important;
 }

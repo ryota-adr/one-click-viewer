@@ -63,10 +63,10 @@ a:hover {
     user-select: none;
 }
 
-div.dir {
+.dir {
     margin-bottom: 20px;
 }
-span.dir:hover {
+.dir:hover {
     background-color: #eaedf9;
     color: #191919;
     cursor: pointer;

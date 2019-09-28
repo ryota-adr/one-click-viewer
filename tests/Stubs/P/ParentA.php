@@ -11,15 +11,25 @@ class ParentA extends AbstractParent implements ParentContract
      * 
      * @var string
      */
-    const NAME = 'ParentA';
+    const NAME = __CLASS__;
 
     /**
-     * Static function.
+     * Get this class name.
      * 
-     * return void
+     * return string
      */
-    public function staticFunc()
+    public static function staticGetClassName()
     {
-        return;
+        return __CLASS__;
+    }
+
+    /**
+     * Get this class name.
+     * 
+     * return string
+     */
+    public function getClassName()
+    {
+        return __CLASS__;;
     }
 }

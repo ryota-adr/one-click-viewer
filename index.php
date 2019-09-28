@@ -1,4 +1,5 @@
 <?php
+require('defines.php');
 require("src/OneClickViewer.php");
 
 $viewer = new OneClickViewer();

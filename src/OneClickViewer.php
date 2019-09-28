@@ -11,7 +11,7 @@ class OneClickViewer
     /**
      * @var bool[]
      */
-    protected $wasRequired = [];
+    protected $required = [];
 
     /**
      * @var string[]
@@ -38,13 +38,6 @@ class OneClickViewer
      * @var string
      */
     protected $urlWithQuery = '';
-
-    /**
-     * Url of this viewr without querys string.
-     *
-     * @var string
-     */
-    protected $urlWithoutQuery = '';
 
     /**
      * Current php file path.
@@ -170,9 +163,7 @@ class OneClickViewer
     {
         $this->setAutoloaderPaths($envPath);
 
-        $this->urlWithQuery = (empty($_SERVER['HTTPS']) ? 'http://' : 'https://') . $_SERVER["HTTP_HOST"] . $_SERVER['REQUEST_URI'];
-        $this->urlWithoutQuery = (empty($_SERVER['HTTPS']) ? 'http://' : 'https://') . $_SERVER["HTTP_HOST"] . strtok($_SERVER["REQUEST_URI"], '?');
-        $this->dirUrl = dirname($this->urlWithoutQuery . "/");
+        $this->urlWithQuery = APP_HOST . $_SERVER['REQUEST_URI'];
 
         $this->requireAutoloader($this->autoloaders);
         
@@ -215,16 +206,16 @@ class OneClickViewer
             if (file_exists($autoloader)) {
                 try {
                     require $autoloader;
-                    $this->wasRequired[] = true;
+                    $this->required[] = true;
                     $this->requiredAutoloaders[] = $autoloader;
                 } catch (Exception $e) {
-                    $this->wasRequired[] = false;
+                    $this->required[] = false;
                 }
             }
         }
         
-        foreach ($this->wasRequired as $wasRequired) {
-            if ($wasRequired === false) {
+        foreach ($this->required as $required) {
+            if ($required === false) {
                 $this->message = "invalid file path.";
                 $this->occuredError = true;
                 break;
@@ -240,7 +231,7 @@ class OneClickViewer
     protected function setInputValue()
     {
         $phpSelf = basename($_SERVER['PHP_SELF']);
-        $this->inputValue = (!empty($this->namespace) && !empty($this->currentClass)) ? $this->namespace . '\\' . $this->currentClass : '';
+        $this->inputValue = (!empty($this->namespace) && !empty($this->currentClass)) ? $this->namespace . '\\' . $this->currentClass : $this->classNameOrPath;
     }
 
     /**
@@ -261,8 +252,6 @@ class OneClickViewer
 
             $this
                 ->replaceClasses($this->code, $this->classArrs)
-                //->replaceClassesInUse()
-                //->replaceOtherClasses()
                 ->addSpanIds()
                 ->replaceCalledProps()
                 ->replaceCalledMethods()
@@ -459,15 +448,6 @@ BODY;
         $this->declaredConsts = $matchDeclaredConsts[2];
     }
 
-    protected function replaceClassStr($className, $search, $subject)
-    {
-        if ((new ReflectionClass($className))->getFileName()) {
-            return str_replace($search, 
-            "<a href=\"/?q=$className\" role=\"link\">$search</a>",
-            $subject);
-        }
-    }
-
     protected function setClassArrs($code)
     {
         preg_match_all('/\\\?(((\w+\\\)+\w+)( as (\w+))?)/', $code, $matchClasses);
@@ -499,14 +479,37 @@ BODY;
                 ];
             }
         }
+        $classArrs = $this->addSameDirClasses($classArrs);
 
         $this->classArrs = $classArrs;
     }
 
-    protected function replaceClasses($code, $classeArr)
+    protected function addSameDirClasses($classArrs)
     {
-        $this->code = $this->replaceFullyQualifiedClassName($code, $classeArr);
-        $this->code = $this->replaceAliasClass($this->code, $classeArr);
+        if (empty($this->namespace)) {
+            return $classArrs;
+        }
+
+        $sameDirClasses = array_map(function($path) {
+            return str_replace('.php', '', str_replace(dirname($this->currentFilePath) . '/' , '', $path));
+        }, glob(dirname($this->currentFilePath) . '/*.php'));
+
+        foreach ($sameDirClasses as $class) {
+            $classArrs[] = [
+                'fullyQualifiedClassName' => $this->namespace . '\\' . $class,
+                'end' => $class,
+                'alias' => ''
+            ];
+        }
+        return $classArrs;
+    }
+
+    protected function replaceClasses($code, $classArrs)
+    {
+        $this->code = $this->replaceFullyQualifiedClassName($code, $classArrs);
+        $this->code = $this->replaceAliasClass($this->code, $classArrs);
+        $this->code = $this->replaceEndClass($this->code, $classArrs);
+        $this->code = $this->replaceClassesWithoutNamespace($this->code);
 
         return $this;
     }
@@ -519,7 +522,7 @@ BODY;
                 (new ReflectionClass($fullyQualifiedClassName))->getFileName();
                 $code = preg_replace(
                     '/(?<![\w|>])' . preg_quote($fullyQualifiedClassName) . '(?![\s]as[\s]\w+)/',
-                    '<a href="/?q=' . $fullyQualifiedClassName . '" role="link">' . $fullyQualifiedClassName . '</a>', 
+                    '<a href="' . APP_HOST . '/?q=' . $fullyQualifiedClassName . '" role="link">' . $fullyQualifiedClassName . '</a>', 
                     $code
                 );
             } catch (Exception $e) {}
@@ -537,12 +540,19 @@ BODY;
         foreach ($hasAliasArrs as $classArr) {
             try {
                 $fullyQualifiedClassName = $classArr['fullyQualifiedClassName'];
+                $alias = $classArr['alias'];
 
                 (new ReflectionClass($fullyQualifiedClassName))->getFileName();
                 $code = preg_replace(
-                    '/(?<![\w|>])' . preg_quote($fullyQualifiedClassName) . '[\s]as[\s]\w+/',
-                    '<a href="/?q=' . $fullyQualifiedClassName . '" role="link">' . $fullyQualifiedClassName . ' as ' . $classArr['alias'] . '</a>', 
+                    '/(?<![\w>])' . preg_quote($fullyQualifiedClassName) . '[\s]as[\s]\w+/',
+                    '<a href="' . APP_HOST . '/?q=' . $fullyQualifiedClassName . '" role="link">' . $fullyQualifiedClassName . ' as ' . $alias . '</a>', 
                     $code
+                );
+
+                $code = preg_replace(
+                    '/(?<!class | trait |interface |[\w\\\>])' . $alias . '(?![\w\\\<])/',
+                   '<a href="' . APP_HOST . '/?q=' . $fullyQualifiedClassName . '" role="link">' . $alias . '</a>',
+                   $code
                 );
             } catch (Exception $e) {}
         }
@@ -550,156 +560,44 @@ BODY;
         return $code;
     }
 
-    /**
-     * Replace use statements.
-     * use Foo\Bar\Class( as Alias) -> use <a href="URL?q=Foo\Bar\Class">Foo\Bar\Class( as Alias)</a>
-     *
-     * return $this
-     */
-    protected function replaceClassesInUse()
+    protected function replaceEndClass($code, $classArrs)
     {
-        preg_match('/namespace[\s][A-Za-z\\\]+?;[\s\S]+?(class|interface|abstract class|trait)/', $this->code, $matchUsesStr);
-
-        if (isset($matchUsesStr[0])) {
-            $usesStr = $matchUsesStr[0];
-
-            //without as
-            preg_match_all('/use ([\w\\\]+?);/', $usesStr, $match_uses);
-            $classes_with_ns = $match_uses[1];
-            $replace_uses_str = $usesStr;
-
-            foreach ($classes_with_ns as $class_with_ns) {
-                try {
-                    $path = (new ReflectionClass($class_with_ns))->getFileName();
-                    if ($path) {
-                        $split = explode('\\', $class_with_ns);
-                        $end = end($split);
-                        $this->classArrs[$end] = $class_with_ns;
-
-                        $replace_uses_str = preg_replace(
-                            '/' . preg_quote($class_with_ns) . ';/',
-                            "<a href=\"$this->urlWithoutQuery?q=$class_with_ns\" role=\"link\">$class_with_ns</a>;", $replace_uses_str
-                        );
-                    }
-                } catch (Exception $e) {}
-            }
-
-            //with as
-            preg_match_all('/use ([A-Za-z\\\]+?) as ([A-Za-z\\\]+?);/', $replace_uses_str, $match_use_as);
-
-            for ($i = 0; $i < count($match_use_as[0]); $i++) {
-                $class_with_ns = $match_use_as[1][$i];
-                $alias = $match_use_as[2][$i];
-                $this->classArrs[$alias] = $class_with_ns;
-
-                try {
-                    if ((new ReflectionClass($class_with_ns))->getFileName()) {
-
-                        $replace_uses_str = str_replace(
-                            "$class_with_ns as $alias",
-                            "<a href=\"$this->urlWithoutQuery?q=$class_with_ns\" role=\"link\">$class_with_ns as $alias</a>",
-                            $replace_uses_str
-                        );
-                    }
-                } catch (Exception $e) {}
-            }
-            $this->code = str_replace($usesStr, $replace_uses_str, $this->code);
-        } else if ($this->currentClass === '') {
-            preg_match_all('/use[\s]((\\\?[\w\\\]+)([\s]as[\s][\w]+)?)(;)/', $this->code, $matchUseStates);
-
-            for ($i = 0; $i < count($matchUseStates[1]); $i++) {
-                $className = $matchUseStates[2][$i];
-                if ((new ReflectionClass($className))->getFileName()) {
-                    $search = $matchUseStates[1][$i];
-                    $this->code = str_replace($search . ';', 
-                        "<a href=\"/?q=$className\" role=\"link\">$search;</a>",
-                        $this->code);
-                }
-            }
+        foreach ($classArrs as $classArr) {
+            $code = preg_replace(
+                '/(?<!class |trait |interface |[\w\\\>])' . $classArr['end'] . '(?![\w\\\<])/',
+                '<a href="' . APP_HOST . '/?q=' . $classArr['fullyQualifiedClassName'] . '" role="link">' . $classArr['end'] . '</a>',
+                $code
+            );
         }
-
-        return $this;
+        return $code;
     }
 
-    /**
-     * Replace all classes except in use statements.
-     *
-     * return $this
-     */
-    protected function replaceOtherClasses()
+    protected function replaceClassesWithoutNamespace($code)
     {
-        preg_match(
-            '/^(class|abstract class|final class|interface|trait) ' . $this->currentClass . '[\s\S]+/m',
-            $this->code,
-            $matchExceptUses
-        );
-
-        $matchExceptUses = isset($matchExceptUses[0]) ? $matchExceptUses[0] : $this->code;
-
-        preg_match_all(
-            '/((\\\?[A-Z][a-z]+)+)(;|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
-            $this->code,
-            $matchClasses
-        );
-        $classes = array_unique(array_map(function($class) {
-            return preg_replace('/^\\\/', '', $class);
-        }, $matchClasses[1]));
-
-        //$classes = array_unique($matchClasses[1]);
-        $idx = array_search($this->currentClass, $classes);
-        array_splice($classes, $idx, 1);
-
+        $classes = $this->getClassesWithoutNamespace($code);
+        
         foreach ($classes as $class) {
-            if (isset($this->classArrs[$class])) {
-                $fullyQualifiedName = preg_quote($this->classArrs[$class]);
-
-                $replaceExceptUses = preg_replace(
-                    '/(\\\)?' . $fullyQualifiedName . '(;|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
-                    "<a href=\"$this->urlWithoutQuery?q=$1$fullyQualifiedName\" role=\"link\">$fullyQualifiedName</a>$2",
-                    $matchExceptUses
-                );
-
-                $replaceExceptUses = preg_replace(
-                    '/(?<![\\\a-zA-Z])' . $class . '(;|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
-                    "<a href=\"$this->urlWithoutQuery?q=$fullyQualifiedName\" role=\"link\">$class</a>$1",
-                    $replaceExceptUses
-                );
-            } else {
-                try {
-                    //same namespace classes
-                    if ($this->namespace === '') {
-                        throw new Exception;
-                    }
-
-                    $class = trim($class, '\\');
-                    $fullyQualifiedName = $this->namespace . '\\' . $class;
-
-                    if ((new ReflectionClass($fullyQualifiedName))->getFileName()) {
-                        $fullyQualifiedName = preg_quote($fullyQualifiedName);
-
-                        $replaceExceptUses = preg_replace(
-                            '/(?<![\\\a-zA-Z])' . preg_quote($class) . '(;|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
-                            "<a href=\"$this->urlWithoutQuery?q=$fullyQualifiedName\" role=\"link\">$class</a>$1",
-                            $matchExceptUses
-                        );
-                    }
-                } catch (Exception $e) {
-                    try {
-                        //fully qualified names
-                        if ((new ReflectionClass($class))->getFileName()) {
-                            //dump($class);
-                            $replaceExceptUses = preg_replace(
-                                '/' . preg_quote($class) . '(:|:|\r|\n| |,|\(|\)|\[|\]|\|)/',
-                                "<a href=\"$this->urlWithoutQuery?q=$class\" role=\"link\">$class</a>$1",
-                                $matchExceptUses
-                            );
-                        }
-                    } catch (Exception $e) {}
-                }
-            }
+            $code = preg_replace(
+                '/(?<!class |\w\\\|<s>)' . $class . '(?![A-Za-z_]|<\/a>)/',
+                '<a href="' . APP_HOST . "/?q=$class\" role=\"link\">$class</a>",
+                $code
+            );
         }
-        $this->code = str_replace($matchExceptUses, $replaceExceptUses, $this->code);
-        return $this;
+        return $code;
+    }
+
+    protected function getClassesWithoutNamespace($code)
+    {
+        preg_match_all('/(?<!class |\w\\\|>)([A-Za-z]+_)+[A-Za-z]+/', $code, $matchClasses);
+        $classes = array_filter($matchClasses[0], function($class) {
+            try {
+                return (new ReflectionClass($class))->getFileName();
+            } catch (Exception $e) {
+                return false;
+            }
+        });
+
+        return array_unique($classes);
     }
 
     /**
@@ -728,7 +626,7 @@ BODY;
                         $class = $this->classArrs[$methodClass];
                         $replaceMethod = preg_replace(
                             '/(?<![\w\\\])' . $methodClass . '( |\(|\)|,|\]|;|::|[\r\n])/',
-                            "<a href=\"$this->urlWithoutQuery?q=$class\" role=\"link\">$methodClass</a>$1",
+                            '<a href="' . APP_HOST . "/?q=$class\" role=\"link\">$methodClass</a>$1",
                             $replaceMethod
                         );
                     } else {
@@ -737,7 +635,7 @@ BODY;
                             if ((new ReflectionClass($methodClassWithNamespace))->getFileName()) {
                                 $replaceMethod = preg_replace(
                                     '/(?<![\w\\\])' . preg_quote($methodClass) . '( |\(|\)|,|\]|;|::|[\r\n])/',
-                                    "<a href=\"$this->urlWithoutQuery?q=$methodClassWithNamespace\" role=\"link\">$methodClass</a>$1",
+                                    '<a href="' . APP_HOST . "/?q=$methodClassWithNamespace\" role=\"link\">$methodClass</a>$1",
                                     $replaceMethod);
 
                                 $this->classArrs[trim($methodClass, '\\')] = $methodClassWithNamespace;
@@ -851,7 +749,7 @@ BODY;
                     $classWithNamespace = $ancestorOrTrait->getName();
                     $this->code = preg_replace(
                         '/(this\-&gt;|' . $this->currentClass . '::\$|static::\$|self::\$)' . $extendedProp . '(,|:|;|\)| |\.|\[|\]|\-)/',
-                        "$1<a href=\"$this->urlWithoutQuery?q=$classWithNamespace#$extendedProp\" role=\"link\">$extendedProp</a>$2",
+                        '<a href="' . APP_HOST . "/?q=$classWithNamespace#$extendedProp\" role=\"link\">$extendedProp</a>$2",
                         $this->code
                     );
                     break 1;
@@ -881,7 +779,7 @@ BODY;
                     $classWithNamespace = $ancestorOrTrait->getName();
                     $this->code = preg_replace(
                         '/(this\-&gt;|' . $this->currentClass . '::|static::|self::)' . $extendedMethod . '(\()/',
-                        "$1<a href=\"$this->urlWithoutQuery?q=$classWithNamespace#$extendedMethod\" role=\"link\">$extendedMethod</a>$2",
+                        "$1<a href=\"" . APP_HOST . "/?q=$classWithNamespace#$extendedMethod\" role=\"link\">$extendedMethod</a>$2",
                         $this->code
                     );
                     break 1;
@@ -911,7 +809,7 @@ BODY;
                     $classWithNamespace = $ancestorOrTrait->getName();
                     $this->code = preg_replace(
                         '/(this\-&gt;|' . $this->currentClass . '::|static::|self::)' . $extendedConst . '(,|:|;|\)| |\.|\[|\]|\-)/',
-                        "$1<a href=\"$this->urlWithoutQuery?q=$classWithNamespace#$extendedConst\" role=\"link\">$extendedConst</a>$2",
+                        "$1<a href=\"" . APP_HOST . "/?q=$classWithNamespace#$extendedConst\" role=\"link\">$extendedConst</a>$2",
                         $this->code
                     );
                     break 1;
@@ -931,26 +829,31 @@ BODY;
     protected function replaceParentPropsMethodsConsts()
     {
         if (!empty($this->parentClass)) {
+            for($i = 0; $i < count($this->classArrs); $i++) {
+                    if ($this->classArrs[$i]['end'] === $this->parentClass ||
+                        $this->classArrs[$i]['alias'] === $this->parentClass) {
+                        $fullyQualifiedParentClassName = $this->classArrs[$i]['fullyQualifiedClassName'];
+                        break;
+                    }
+                }
 
-            if (isset($this->classArrs[$this->parentClass])) {
-                $parentWithNamespace = $this->classArrs[$this->parentClass];
-            } else {
+            if (!isset($fullyQualifiedParentClassName)) {
                 try {
-                    $parentWithNamespace = (new ReflectionClass($this->namespace . '\\' . $this->parentClass))->getName();
+                    $fullyQualifiedParentClassName = (new ReflectionClass($this->namespace . '\\' . $this->parentClass))->getName();
                 } catch (Exception $e) {}
             }
-
+            
             //parent::
             $this->code = preg_replace(
                 '/(?<!\w)parent::/',
-                "<a href=\"$this->urlWithoutQuery?q=$parentWithNamespace\">parent</a>::",
+                '<a href="' . APP_HOST . "/?q=$fullyQualifiedParentClassName\">parent</a>::",
                 $this->code
             );
 
             //parent::props, methods, and consts
             $this->code = preg_replace(
                 '/parent<\/a>::(\$)?(\w+)/',
-                "parent</a>::<a href=\"$this->urlWithoutQuery?q=$parentWithNamespace#$2\" role=\"link\">$1$2</a>",
+                'parent</a>::<a href="' . APP_HOST . "/?q=$fullyQualifiedParentClassName#$2\" role=\"link\">$1$2</a>",
                 $this->code
             );
         }
@@ -1007,7 +910,7 @@ BODY;
         $fileList = "";
         foreach (glob(dirname($this->currentFilePath) . '/*.php') as $filePath) {
             $baseName = basename($filePath);
-            $fileList .= "<div><span>    </span><a href=\"$this->urlWithoutQuery?q=$filePath\">$baseName</a></div>\n";
+            $fileList .= '<div><span>    </span><a href="' . APP_HOST . "/?q=$filePath\">$baseName</a></div>\n";
         }
 
         $this->fileList = <<<LIST

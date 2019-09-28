@@ -4,7 +4,11 @@ namespace OneClickViewer\P\Abs;
 
 abstract class AbstractParent
 {
-    abstract public function absFunc();
+    public function getAbstractParentName() {
+        return __CLASS__;
+    }
 
-    abstract public static function staticAbsFun();
+    public static function staticGetAbstractParentName() {
+        return __CLASS__;
+    }
 }

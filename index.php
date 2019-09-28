@@ -29,7 +29,10 @@ $viewer->html();
             </div>
         </form>
     </div>
-    <div>
+    <div class="container">
+        <span class="dir" data-dir="<?php echo $viewer->getDirUri(); ?>">
+            <?php echo $viewer->getDirUri(); ?>
+        </span>
         <?php $viewer->output(); ?>
     </div>
     <div>

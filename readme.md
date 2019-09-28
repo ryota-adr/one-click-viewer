@@ -37,4 +37,9 @@ defines.sample.phpをdefines.phpに変更
 define('APP_HOST', 'http(s)://your-app-host');
 ```
 
+```
+cd test
+composer dump-autoload --optimize
+```
+
 <p>上記を終えてフォームのテキストボックスに完全修飾クラス名かphpファイルのパスを入れるとコードが表示されます。</p>

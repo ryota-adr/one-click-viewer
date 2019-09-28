@@ -4,10 +4,10 @@ namespace OneClickViewer;
 use OneClickViewer\Int\InterfaceA;
 use OneClickViewer\Int\InterfaceB;
 use OneClickViewer\P\ParentA;
-use OneClickViewer\Some\Someone;
+use OneClickViewer\Some\SomeClass;
 use OneClickViewer\Tr;
 
-class Test extends ParentA implements InterfaceA, InterfaceB
+class TestClass extends ParentA implements InterfaceA, InterfaceB
 {
     use Tr\TraitA, Tr\TraitB;
 

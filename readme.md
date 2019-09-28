@@ -30,4 +30,11 @@
 AUTOLOADERPATH=path/to/vendor/autoloader.php
 ```
 
-<p>上記を終えてフォームのテキストボックスに完全修飾クラス名を入れるとコードが表示されます。</p>
+defines.sample.phpをdefines.phpに変更
+
+```
+<?php
+define('APP_HOST', 'http(s)://your-app-host');
+```
+
+<p>上記を終えてフォームのテキストボックスに完全修飾クラス名かphpファイルのパスを入れるとコードが表示されます。</p>

@@ -1,18 +1,17 @@
 (function () {
     //copy dir path
-    /*
-    var dir = document.querySelector("div.dir");
+    const dir = document.querySelector(".dir");
     dir.addEventListener("click", function () {
-        var copyFrom = document.createElement("textarea");
+        const copyFrom = document.createElement("textarea");
         copyFrom.textContent = dir.dataset.dir;
-        var bodyElm = document.getElementsByTagName("body")[0];
+        const bodyElm = document.getElementsByTagName("body")[0];
         bodyElm.appendChild(copyFrom);
         copyFrom.select();
         document.execCommand('copy');
         bodyElm.removeChild(copyFrom);
 
         window.open();
-    }, false);*/
+    }, false);
 
     const toggle = document.querySelector("span.toggle");
     if (toggle) {

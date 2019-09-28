@@ -242,7 +242,6 @@ class OneClickViewer
     public function html()
     {
         if (!$this->occuredError) {
-            $this->setDirUri();
             $this->setParentClass();
             $this->setClassArrs($this->code);
             $this->setAncestorsAndTraits();
@@ -266,7 +265,7 @@ class OneClickViewer
             $this->setFileList();
 
             $this->html = <<<BODY
-<div class="container">
+<div>
     <div class="namespace">
         $this->form
     </div>
@@ -305,10 +304,10 @@ BODY;
         if (isset($this->classNameOrPath)) {
             try {
                 if (file_exists($this->classNameOrPath)) { //file path
-                    $this->currentFilePath = $this->classNameOrPath;
+                    $this->currentFilePath = str_replace('\\', '/', $this->classNameOrPath);
                     $this->code = htmlspecialchars(file_get_contents($this->currentFilePath));
                 } else { //fully qualified name
-                    $this->currentFilePath = (new ReflectionClass($this->classNameOrPath))->getFileName();
+                    $this->currentFilePath = str_replace('\\', '/', (new ReflectionClass($this->classNameOrPath))->getFileName());
                     $this->code = htmlspecialchars(@file_get_contents($this->currentFilePath));
                 }
             } catch (Exception $e) {
@@ -318,23 +317,9 @@ BODY;
         }
     }
 
-    /**
-     * Set directory URI wrapped html span.
-     *
-     * return void
-     */
-    protected function setDirUri()
+    public function getDirUri()
     {
-        $dir = dirname($this->currentFilePath);
-        //dump($this->currentFilePath, $this->requiredAutoloaders);
-        /*
-        foreach ($this->requiredAutoloaders as $requiredAutoloader) {
-            $dirArr = explode('/', $requiredAutoloader);
-            $baseDir = $dirArr[array_search('vendor', $dirArr) - 1];
-            $replativeDir = $baseDir . explode($baseDir, $dir, 2)[1];
-
-            $this->dirUri .= "<div class=\"dir\" data-dir=\"$dir\">$replativeDir</div>";
-        }*/
+        return dirname($this->currentFilePath);
     }
 
     /**
@@ -383,23 +368,26 @@ BODY;
     protected function setAncestorsAndTraits()
     {
         if (!(empty($this->namespace) || empty($this->currentClass))) {
-            $reflectionThisClass = new ReflectionClass($this->namespace . '\\' . $this->currentClass);
-            $this->ancestorsAndTraits = array_values($reflectionThisClass->getTraits());
-            $reflectionParent = $reflectionThisClass->getParentClass();
+            try {
+                $reflectionThisClass = new ReflectionClass($this->namespace . '\\' . $this->currentClass);
+                $this->ancestorsAndTraits = array_values($reflectionThisClass->getTraits());
+                $reflectionParent = $reflectionThisClass->getParentClass();
 
-            while ($reflectionParent) {
-                foreach ($reflectionParent->getTraits() as $trait) {
-                    if (strpos($trait->getName(), '\\')) {
-                        $this->ancestorsAndTraits[] = $trait;
+                while ($reflectionParent) {
+                    foreach ($reflectionParent->getTraits() as $trait) {
+                        if (strpos($trait->getName(), '\\')) {
+                            $this->ancestorsAndTraits[] = $trait;
+                        }
                     }
-                }
 
-                if (strpos($reflectionParent->getName(), '\\')) {
-                    $this->ancestorsAndTraits[] = $reflectionParent;
+                    if (strpos($reflectionParent->getName(), '\\')) {
+                        $this->ancestorsAndTraits[] = $reflectionParent;
+                    }
+                    $reflectionParent = $reflectionParent->getParentClass();
                 }
-                $reflectionParent = $reflectionParent->getParentClass();
-            }
-            $this->ancestorsAndTraits = array_reverse($this->ancestorsAndTraits);
+                
+                $this->ancestorsAndTraits = array_reverse($this->ancestorsAndTraits);
+            } catch (Exception $e) {}
         }
     }
 

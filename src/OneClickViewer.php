@@ -497,6 +497,7 @@ BODY;
         $this->code = $this->replaceFullyQualifiedClassName($code, $classArrs);
         $this->code = $this->replaceAliasClass($this->code, $classArrs);
         $this->code = $this->replaceEndClass($this->code, $classArrs);
+        $this->code = $this->replaceNotFullyQualifiedClassName($this->code, $classArrs);
         $this->code = $this->replaceClassesWithoutNamespace($this->code);
 
         return $this;
@@ -557,6 +558,39 @@ BODY;
                 $code
             );
         }
+        return $code;
+    }
+
+    protected function replaceNotFullyQualifiedClassName($code)
+    {
+        preg_match_all('/use \\\?([\w+\\\]+\w);/', $code, $match);
+        foreach ($match[1] as $namespace) {
+            try {
+                (new ReflectionClass($namespace))->getFileName();
+            } catch (Exception $e) {
+                $exploded = explode('\\', $namespace);
+                $end = end($exploded);
+                preg_match_all('/' . $end . '\\\[A-z_]+/', $code, $match);
+            }
+
+            if (!isset($match[0])) {
+                continue;
+            }
+
+            foreach ($match[0] as $notFullyQualifiedClass) {
+                $fullyQualifiedClass = str_replace($end, $notFullyQualifiedClass, $namespace);
+                try {
+                    (new ReflectionClass($fullyQualifiedClass))->getFileName();
+
+                    $code = preg_replace(
+                        '/(?<!\w[\\\>])' . preg_quote($notFullyQualifiedClass) . '(?![\w<])/',
+                        '<a href="' . APP_HOST . '/?q=' . $fullyQualifiedClass . '" role="link">' . $notFullyQualifiedClass . '</a>',
+                        $code
+                    );
+                } catch (Exception $e) {}
+            }
+        }
+
         return $code;
     }
 
@@ -833,8 +867,8 @@ BODY;
             
             //parent::
             $this->code = preg_replace(
-                '/(?<!\w)parent::/',
-                '<a href="' . APP_HOST . "/?q=$fullyQualifiedParentClassName\">parent</a>::",
+                '/(?<![\w\\\>])parent(?![\w<])/',
+                '<a href="' . APP_HOST . "/?q=$fullyQualifiedParentClassName\">parent</a>",
                 $this->code
             );
 

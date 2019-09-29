@@ -1,6 +1,6 @@
 <?php
 
-namespace OneClickViewer\P\Abs;
+namespace OneClickViewer\Tests\P\Abs;
 
 abstract class AbstractParent
 {

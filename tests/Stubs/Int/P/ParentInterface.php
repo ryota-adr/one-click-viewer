@@ -1,8 +1,8 @@
 <?php
 
-namespace OneClickViewer\Int\P;
+namespace OneClickViewer\Tests\Int\P;
 
 interface ParentInterface
 {
-    public function doIntP();
+    public function getParentInterfaceName();
 }

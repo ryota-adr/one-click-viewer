@@ -1,5 +1,5 @@
 <?php
 
-namespace OneClickViewer\Contract;
+namespace OneClickViewer\Tests\Contract;
 
 interface ParentContract {}

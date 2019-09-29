@@ -1,5 +1,11 @@
 <?php
 
-namespace OneClickViewer\Some;
+namespace OneClickViewer\Tests\Some;
 
-class SomeClass {}
+class SomeClass
+{
+    public function getSomeClassName()
+    {
+        return __CLASS__;
+    }
+}

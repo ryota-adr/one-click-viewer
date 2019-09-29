@@ -1,11 +1,12 @@
 <?php
-namespace OneClickViewer;
+namespace OneClickViewer\Tests;
 
-use OneClickViewer\Int\InterfaceA;
-use OneClickViewer\Int\InterfaceB;
-use OneClickViewer\P\ParentA;
-use OneClickViewer\Some\SomeClass;
-use OneClickViewer\Tr;
+use OneClickViewer\Tests\Int\InterfaceA;
+use OneClickViewer\Tests\Int\InterfaceB;
+use OneClickViewer\Tests\P\ParentA;
+use OneClickViewer\Tests\Some\SomeClass;
+use OneClickViewer\Tests\Tr;
+use OneClickViewer\Tests\Ex\ExceptionA;
 
 class TestClass extends ParentA implements InterfaceA, InterfaceB
 {
@@ -16,7 +17,7 @@ class TestClass extends ParentA implements InterfaceA, InterfaceB
      *
      * @var string
      */
-    const NAME = 'Test';
+    const NAME = __CLASS__;
 
     /**
      * The public property.
@@ -40,39 +41,49 @@ class TestClass extends ParentA implements InterfaceA, InterfaceB
     private $privateProp = true;
 
     /**
-     * Someone.
+     * SomeClass.
      *
-     * @var \OneClickViewer\Some\Someone
+     * @var \OneClickViewer\Tests\Some\SomeClass
      */
-    protected $someone;
+    protected $someClass;
 
     /**
      * Contructor.
      */
-    public function contruct()
+    public function __construct(SomeClass $someClass)
     {
-        $this->setSomeone($someone);
+        $this->setSomeClass($someClass);
     }
 
     /**
-     * Get someone.
+     * Get SomeClass.
      *
-     * @return \OneClickViewer\Some\Someone
+     * @return \OneClickViewer\Tests\Some\SomeClass
      */
-    public function getSomeone(): Someone
+    public function getSomeClass(): SomeClass
     {
-        return $this->someone;
+        return $this->someClass;
     }
 
     /**
      * Set someone.
      *
-     * @param \OneClickViewer\Some\Someone
+     * @param \OneClickViewer\Tests\Some\SomeClass
      * @return void
      */
-    public function setSomeone(Someone $someone): Someone
+    public function setSomeClass(SomeClass $someClass)
     {
-        $this->someone = $someone;
+        $this->someClass = $someClass;
+    }
+
+    /**
+     * get name of SomeClass.
+     *
+     * return string
+     */
+    public function getSomeClassName()
+    {
+        return $this->someClass->getSomeClassName();
     }
 
     /**
@@ -86,21 +97,11 @@ class TestClass extends ParentA implements InterfaceA, InterfaceB
     }
 
     /**
-     * Soemone does something.
-     *
-     * return mixed
-     */
-    public function func()
-    {
-        return $this->someone->doSomething();
-    }
-
-    /**
      * The public function.
      *
      * @return string
      */
-    public function publicFunc(): string
+    public function getPublicProp(): string
     {
         return $this->publicProp;
     }
@@ -110,7 +111,7 @@ class TestClass extends ParentA implements InterfaceA, InterfaceB
      *
      * return int
      */
-    protected function protectedFunc(): int
+    protected function getProtectedProp(): int
     {
         return $this->protectedProp;
     }
@@ -120,34 +121,19 @@ class TestClass extends ParentA implements InterfaceA, InterfaceB
      *
      * return bool
      */
-    private function privateFunc()
+    private function getPrivateProp()
     {
         return $this->privateProp;
     }
 
     /**
-     * Static function.
+     * Get class name.
      *
-     * return void
+     * return string
      */
-    public static function staticFunc()
+    public static function staticGetClassName()
     {
-        return;
-    }
-
-    /**
-     * Run functions of the instance.
-     *
-     * return array
-     */
-    public function runFuncs(): array
-    {
-        return [
-            $this->func(),
-            $this->publicFunc(),
-            $this->protectedFunc(),
-            $this->privateFunc(),
-        ];
+        return __CLASS__;
     }
 
     /**
@@ -155,28 +141,36 @@ class TestClass extends ParentA implements InterfaceA, InterfaceB
      *
      * return array
      */
-    public static function runStaticFuncs(): array
+    public static function runStaticGetClassNames(): array
     {
         return [
-            static::staticFunc(),
-            parent::staticFunc(),
-            self::staticFunc(),
+            static::staticGetClassName(),
+            parent::staticGetClassName(),
+            self::staticGetClassName(),
         ];
     }
 
-    public function doIntA()
+    public function getInterfaceAName()
     {
-        return;
+        return 'OneClickViewer\Tests\Int\interfaceA';
     }
 
-    public function doIntB()
+    public function getInterfaceBName()
     {
-        return;
+        return 'OneClickViewer\Tests\Int\interfaceB';
     }
 
-    public function doIntP()
+    public function getParentInterfaceName()
     {
-        return;
+        return array_values(class_implements(new parent, true))[0];
+    }
+
+    /**
+     * @throws \OneClickViewer\Tests\Ex\ExceptionA
+     */
+    public function throwExceptionA()
+    {
+        throw new ExceptionA;
     }
 
 }

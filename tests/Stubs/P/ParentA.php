@@ -1,8 +1,8 @@
 <?php
-namespace OneClickViewer\P;
+namespace OneClickViewer\Tests\P;
 
-use OneClickViewer\Contract\ParentContract;
-use OneClickViewer\P\Abs\AbstractParent;
+use OneClickViewer\Tests\Contract\ParentContract;
+use OneClickViewer\Tests\P\Abs\AbstractParent;
 
 class ParentA extends AbstractParent implements ParentContract
 {

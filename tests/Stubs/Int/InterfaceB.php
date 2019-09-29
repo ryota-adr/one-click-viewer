@@ -1,8 +1,8 @@
 <?php
 
-namespace OneClickViewer\Int;
+namespace OneClickViewer\Tests\Int;
 
 interface interfaceB
 {
-    public function doIntB();
+    public function getInterfaceBName();
 }

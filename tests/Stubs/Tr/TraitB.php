@@ -1,6 +1,6 @@
 <?php
 
-namespace OneClickViewer\Tr;
+namespace OneClickViewer\Tests\Tr;
 
 trait TraitB
 {

@@ -1,10 +1,10 @@
 <?php
 
-namespace OneClickViewer\Int;
+namespace OneClickViewer\Tests\Int;
 
-use OneClickViewer\Int\P\ParentInterface;
+use OneClickViewer\Tests\Int\P\ParentInterface;
 
 interface interfaceA extends ParentInterface
 {
-    public function doIntA();
+    public function getInterfaceAName();
 }

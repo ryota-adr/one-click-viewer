@@ -159,16 +159,16 @@ class OneClickViewer
      * @param string $envPath
      * @return void
      */
-    public function __construct($envPath = '.env')
+    public function __construct($envPath, $classNameOrPath)
     {
         $this->setAutoloaderPaths($envPath);
 
-        $this->urlWithQuery = APP_HOST . $_SERVER['REQUEST_URI'];
+        $this->urlWithQuery = APP_HOST . '/?q=' . $classNameOrPath;
 
         $this->requireAutoloader($this->autoloaders);
         
-        if (isset($_GET['q'])) {
-            $this->classNameOrPath = $_GET['q'];
+        if (isset($classNameOrPath)) {
+            $this->classNameOrPath = $classNameOrPath;
             $this->setCode();
             $this->setCurrentClass();
             $this->setNamespace();
@@ -239,7 +239,7 @@ class OneClickViewer
      *
      * return $this
      */
-    public function html()
+    public function setHtml()
     {
         if (!$this->occuredError) {
             $this->setParentClass();
@@ -259,7 +259,8 @@ class OneClickViewer
                 ->replaceExtendedMethods()
                 ->replaceExtendedConsts()
                 ->replaceParentPropsMethodsConsts()
-                ->replaceInternalFunctions();
+                ->replaceInternalFunctions()
+                ->replaceInternalClasses();
 
             $this->code2Table();
             $this->setFileList();
@@ -570,14 +571,14 @@ BODY;
             } catch (Exception $e) {
                 $exploded = explode('\\', $namespace);
                 $end = end($exploded);
-                preg_match_all('/' . $end . '\\\[A-z_]+/', $code, $match);
+                preg_match_all('/' . $end . '\\\[A-z_]+/', $code, $matchNotClass);
             }
 
-            if (!isset($match[0])) {
+            if (!isset($matchNotClass[0])) {
                 continue;
             }
 
-            foreach ($match[0] as $notFullyQualifiedClass) {
+            foreach ($matchNotClass[0] as $notFullyQualifiedClass) {
                 $fullyQualifiedClass = str_replace($end, $notFullyQualifiedClass, $namespace);
                 try {
                     (new ReflectionClass($fullyQualifiedClass))->getFileName();
@@ -898,9 +899,34 @@ BODY;
                 
                 $this->code = preg_replace(
                     '/(\(|\[| )' . '(' . $func . ')(\()/',
-                    '$1' . '<a href="https://www.php.net/manual/ja/function.' . $replacedFunc . '.php">' . $func . '</a>$3',
+                    '$1' . '<a href="https://www.php.net/manual/ja/function.' . $replacedFunc . '.php" role="link">' . $func . '</a>$3',
                     $this->code);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Replace internal classes.
+     * 
+     * return $this
+     */
+    protected function replaceInternalClasses()
+    {
+        preg_match_all('/(?<=use |new | \\\|\(|\[)(([A-Z][a-z]+)+)(?![\\\<])/', $this->code, $matchNoNamespaceClassName);
+        $matchNoNamespaceClassNames = array_unique($matchNoNamespaceClassName[0]);
+        
+        foreach ($matchNoNamespaceClassNames as $noNamespaceClassName) {
+            try {
+                if ((new ReflectionClass($noNamespaceClassName))->isInternal()) {
+                    $this->code = preg_replace(
+                        '/(?<!\w|\w\\\|>)' . $noNamespaceClassName . '(?!\w|\\\\w|<)/',
+                        '<a href="https://www.php.net/manual/ja/class.' . strtolower($noNamespaceClassName) . '.php" role="link">' . $noNamespaceClassName . '</a>',
+                        $this->code
+                    );
+                }
+            } catch (Exception $e) {}
         }
 
         return $this;
@@ -949,13 +975,13 @@ LIST;
     }
 
     /**
-     * Creat html script of javascript.
-     *
-     * return string
+     * Get html string.
+     * 
+     * return string.
      */
-    protected function jsLink()
+    public function getHtml()
     {
-        return "<script type=\"text/javascript\" src=\"$this->jsPath\"></script>";
+        return $this->html;
     }
 
     /**

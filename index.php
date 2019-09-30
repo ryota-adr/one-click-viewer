@@ -2,8 +2,9 @@
 require('defines.php');
 require("src/OneClickViewer.php");
 
-$viewer = new OneClickViewer();
-$viewer->html();
+$classNameOrPath = isset($_GET['q']) ? $_GET['q'] : null;
+$viewer = new OneClickViewer('.env', $classNameOrPath);
+$viewer->setHtml();
 ?>
 <html>
 <head>

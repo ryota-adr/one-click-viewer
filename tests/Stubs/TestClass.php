@@ -5,6 +5,7 @@ use OneClickViewer\Tests\Int\InterfaceA;
 use OneClickViewer\Tests\Int\InterfaceB;
 use OneClickViewer\Tests\P\ParentA;
 use OneClickViewer\Tests\Some\SomeClass;
+use OneClickViewer\Tests\Some\Foo\SomeClass as FooClass;
 use OneClickViewer\Tests\Tr;
 use OneClickViewer\Tests\Ex\ExceptionA;
 
@@ -53,6 +54,9 @@ class TestClass extends ParentA implements InterfaceA, InterfaceB
     public function __construct(SomeClass $someClass)
     {
         $this->setSomeClass($someClass);
+        $reflect = new ReflectionClass($this);
+        $className = get_class($reflect);
+        $foo = new FooClass();
     }
 
     /**

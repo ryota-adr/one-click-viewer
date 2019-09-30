@@ -2,7 +2,7 @@
 
 namespace OneClickViewer\Tests\Ex;
 
-class ExceptionA
+class ExceptionA extends \Exception
 {
 
 }

@@ -9,4 +9,5 @@ embed.html
 flowchart.drawio
 icon.jpg
 .env
+.phpunit.result.cache
 defines.php

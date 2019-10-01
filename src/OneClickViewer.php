@@ -772,7 +772,7 @@ BODY;
                     $classWithNamespace = $ancestorOrTrait->getName();
                     $this->code = preg_replace(
                         '/(this\-&gt;|' . $this->currentClass . '::\$|static::\$|self::\$)' . $extendedProp . '(,|:|;|\)| |\.|\[|\]|\-)/',
-                        '<a href="' . APP_HOST . "/?q=$classWithNamespace#$extendedProp\" role=\"link\">$extendedProp</a>$2",
+                        '$1<a href="' . APP_HOST . "/?q=$classWithNamespace#$extendedProp\" role=\"link\">$extendedProp</a>$2",
                         $this->code
                     );
                     break 1;

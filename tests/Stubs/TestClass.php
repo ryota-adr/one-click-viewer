@@ -57,6 +57,8 @@ class TestClass extends ParentA implements InterfaceA, InterfaceB
         $reflect = new ReflectionClass($this);
         $className = get_class($reflect);
         $foo = new FooClass();
+        $parentProp = $this->parentProp;
+        $randomInt = $this->getRandomInt();
     }
 
     /**
@@ -138,6 +140,19 @@ class TestClass extends ParentA implements InterfaceA, InterfaceB
     public static function staticGetClassName()
     {
         return __CLASS__;
+    }
+
+    /**
+     * Run methods of this class.
+     * 
+     * return array
+     */
+    public function runMethods()
+    {
+        return [
+            $this->getSomeClass(),
+            $this->setSomeClass()
+        ];
     }
 
     /**

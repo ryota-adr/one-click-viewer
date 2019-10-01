@@ -13,6 +13,8 @@ class ParentA extends AbstractParent implements ParentContract
      */
     const NAME = __CLASS__;
 
+    protected $parentProp;
+
     /**
      * Get this class name.
      * 
@@ -31,5 +33,15 @@ class ParentA extends AbstractParent implements ParentContract
     public function getClassName()
     {
         return __CLASS__;;
+    }
+
+    /**
+     * Get 0 or 1 randomly.
+     * 
+     * return int
+     */
+    public function getRandomInt()
+    {
+        return random_int(0, 1);
     }
 }

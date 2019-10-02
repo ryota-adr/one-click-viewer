@@ -1,6 +1,6 @@
 <?php
 require('defines.php');
-require("src/OneClickViewer.php");
+require('src/OneClickViewer.php');
 
 $classNameOrPath = isset($_GET['q']) ? $_GET['q'] : null;
 $viewer = new OneClickViewer('.env', $classNameOrPath);

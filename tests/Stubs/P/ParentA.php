@@ -13,6 +13,8 @@ class ParentA extends AbstractParent implements ParentContract
      */
     const NAME = __CLASS__;
 
+    const PARENTA_NAME = __CLASS__;
+
     protected $parentProp;
 
     /**

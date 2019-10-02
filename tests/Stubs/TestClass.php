@@ -54,11 +54,15 @@ class TestClass extends ParentA implements InterfaceA, InterfaceB
     public function __construct(SomeClass $someClass)
     {
         $this->setSomeClass($someClass);
-        $reflect = new ReflectionClass($this);
+        $reflect = new \ReflectionClass($this);
         $className = get_class($reflect);
         $foo = new FooClass();
         $parentProp = $this->parentProp;
         $randomInt = $this->getRandomInt();
+        $parentAName = static::PARENTA_NAME;
+        $int = random_int(0, 1);
+        $array = array_merge([], []);
+        $datatime = new \DateTime('2000-01-01');
     }
 
     /**

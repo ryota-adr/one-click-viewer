@@ -54,14 +54,6 @@ class OneClickViewerTest extends TestCase
         'publicProp', 'protectedProp', 'privateProp', 'someClass'
     ];
 
-    protected $extendedProperties = [
-        'parentProp'
-    ];
-
-    protected $extendedMethods = [
-        'getRandomInt'
-    ];
-
     protected $methods = [
         'getSomeClass',
         'setSomeClass'
@@ -71,12 +63,45 @@ class OneClickViewerTest extends TestCase
         'NAME'
     ];
 
+    protected $extendedProperties = [
+        'parentProp'
+    ];
+
+    protected $extendedMethods = [
+        'getRandomInt'
+    ];
+
+    protected $extendedConstants = [
+        'PARENTA_NAME'
+    ];
+
+    protected $parentProperties = [
+        'parentProp'
+    ];
+
+    protected $parentMethods = [
+        'getRandomInt'
+    ];
+
+    protected $parentConstants = [
+        'PARENTA_NAME'
+    ];
+
+    protected $internalFunctions = [
+        'random_int', 'array_merge'
+    ];
+
+    protected $internalClasses = [
+        'ReflectionClass', 'DateTime'
+    ];
+
     public static function setUpBeforeClass(): void
     {
         define('ROOT', dirname(dirname(__DIR__)));
 
         require(ROOT . '/defines.php');
         require(ROOT . '/src/OneClickViewer.php');
+        require(ROOT . '/src/helpers.php');
         require(ROOT . '/tests/vendor/autoload.php');
     }
 
@@ -226,6 +251,116 @@ class OneClickViewerTest extends TestCase
 
             $this->assertTrue(!empty($matchExtendedMethods[0]));
         }
+    }
+
+    public function testReplaceExtendedConsts()
+    {
+        foreach ($this->extendedConstants as $extendedConstant) {
+            preg_match_all(
+                '/' . preg_quote($this->parentClass) . '#' . $extendedConstant . '" role="link">' . $extendedConstant . '</',
+                $this->code,
+                $matchExtendedConstants
+            );
+
+            $this->assertTrue(!empty($matchExtendedConstants[0]));
+        }
+    }
+
+    public function testReplaceParentPropsMethodsConsts()
+    {
+        $parentPropsMethodsConsts = array_merge($this->parentProperties, $this->parentMethods, $this->parentConstants);
+
+        foreach ($parentPropsMethodsConsts as $parentPropMethodConst) {
+            preg_match_all(
+                '/' . preg_quote($this->parentClass) . '#' . $parentPropMethodConst . '" role="link">' . $parentPropMethodConst . '</',
+                $this->code,
+                $matchPropsMethodsConsts
+            );
+
+            $this->assertTrue(!empty($matchPropsMethodsConsts[0]));
+        }
+    }
+
+    public function testReplaceInternalFunctions()
+    {
+        foreach ($this->internalFunctions as $internalFunction) {
+            preg_match_all(
+                '/' . preg_quote('https://www.php.net/manual/ja/function.', '/') . str_replace('_', '-', $internalFunction) . '\.php" role="link">' . $internalFunction . '</',
+                $this->code,
+                $matchFunctions
+            );
+
+            $this->assertTrue(!empty($matchFunctions[0]));
+        }
+    }
+
+    public function testReplaceInternalClasses()
+    {
+        foreach ($this->internalClasses as $internalClass) {
+            preg_match_all(
+                '/' . preg_quote('https://www.php.net/manual/ja/class.', '/') . strtolower($internalClass) . '\.php" role="link">' . $internalClass . '</',
+                $this->code,
+                $matchInternalClasses
+            );
+            
+            $this->assertTrue(!empty($matchInternalClasses[0]));
+        }
+    }
+
+    public function testInputInvalidClassName()
+    {
+        $viewer = new OneClickViewer(ROOT . '/.env', 'invalid\class');
+        $viewer->setHtml();
+        $code = $viewer->getHtml();
+
+        $message = 'Invalid class name or path.';
+
+        preg_match('/' . preg_quote($message, '/') . '/', $code, $matchMessage);
+
+        $this->assertSame($matchMessage[0], $message);
+    }
+
+    public function testInputNullClassName()
+    {
+        $viewer = new OneClickViewer(ROOT . '/.env', null);
+        $viewer->setHtml();
+        $code = $viewer->getHtml();
+
+        $message = 'Invalid class name or path.';
+
+        preg_match('/' . preg_quote($message, '/') . '/', $code, $matchMessage);
+
+        $this->assertSame($matchMessage[0], $message);
+    }
+
+    public function testInputPath()
+    {
+        $viewer = new OneClickViewer(ROOT . '/.env', ROOT . '/tests/Stubs/TestClass.php');
+        $viewer->setHtml();
+        $code = $viewer->getHtml();
+        var_dump($code);
+        preg_match(
+            '/' . preg_quote($this->class) . '" role="link">' . $this->class . '</',
+            $code,
+            $matchReplacedString
+        );
+
+        $this->assertSame(
+            $matchReplacedString[0],
+            $this->class . '" role="link">' . $this->class . '<'
+        );
+    }
+
+    public function testInvalidAutoloaderPath()
+    {
+        $viewer = new OneClickViewer(__DIR__ . '/.invalid-env', $this->class);
+        $viewer->setHtml();
+        $code = $viewer->getHtml();
+        $message = 'invalid autoloader file path: ';
+
+        preg_match('/' . preg_quote($message, '/') . '/', $code, $matchMessage);
+
+        $this->assertSame($matchMessage[0], $message);
     }
 }
 ?>

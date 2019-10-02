@@ -204,19 +204,23 @@ class OneClickViewer
     {
         foreach ($autoloaders as $autoloader) {
             if (file_exists($autoloader)) {
-                try {
-                    require $autoloader;
-                    $this->required[] = true;
-                    $this->requiredAutoloaders[] = $autoloader;
-                } catch (Exception $e) {
-                    $this->required[] = false;
-                }
+                require $autoloader;
+                $this->required[] = [
+                    'bool' => true,
+                    'path' => $autoloader
+                ];
+                $this->requiredAutoloaders[] = $autoloader;
+            } else {
+                $this->required[] = [
+                    'bool' => false,
+                    'path' => $autoloader
+                ];
             }
         }
         
         foreach ($this->required as $required) {
-            if ($required === false) {
-                $this->message = "invalid file path.";
+            if ($required['bool'] === false) {
+                $this->message = 'invalid autoloader file path: ' . $required['path'];
                 $this->occuredError = true;
                 break;
             }
@@ -511,7 +515,7 @@ BODY;
                 $fullyQualifiedClassName = $classArr['fullyQualifiedClassName'];
                 (new ReflectionClass($fullyQualifiedClassName))->getFileName();
                 $code = preg_replace(
-                    '/(?<![\w|>])' . preg_quote($fullyQualifiedClassName) . '(?![\s]as[\s]\w+)/',
+                    '/(?<![\w|>])' . preg_quote($fullyQualifiedClassName) . '(?![\s]as[\s]\w+|\\\|\w)/',
                     '<a href="' . APP_HOST . '/?q=' . $fullyQualifiedClassName . '" role="link">' . $fullyQualifiedClassName . '</a>', 
                     $code
                 );
@@ -828,10 +832,10 @@ BODY;
 
         foreach ($extendedConsts as $extendedConst) {
             foreach ($this->ancestorsAndTraits as $ancestorOrTrait) {
-                if ($ancestorOrTrait->hasProperty($extendedConst)) {
+                if ($ancestorOrTrait->hasConstant($extendedConst)) {
                     $classWithNamespace = $ancestorOrTrait->getName();
                     $this->code = preg_replace(
-                        '/(this\-&gt;|' . $this->currentClass . '::|static::|self::)' . $extendedConst . '(,|:|;|\)| |\.|\[|\]|\-)/',
+                        '/(' . $this->currentClass . '::|static::|self::)' . $extendedConst . '(,|:|;|\)| |\.|\[|\]|\-)/',
                         "$1<a href=\"" . APP_HOST . "/?q=$classWithNamespace#$extendedConst\" role=\"link\">$extendedConst</a>$2",
                         $this->code
                     );
@@ -853,17 +857,19 @@ BODY;
     {
         if (!empty($this->parentClass)) {
             for($i = 0; $i < count($this->classArrs); $i++) {
-                    if ($this->classArrs[$i]['end'] === $this->parentClass ||
-                        $this->classArrs[$i]['alias'] === $this->parentClass) {
-                        $fullyQualifiedParentClassName = $this->classArrs[$i]['fullyQualifiedClassName'];
-                        break;
-                    }
+                if ($this->classArrs[$i]['end'] === $this->parentClass ||
+                    $this->classArrs[$i]['alias'] === $this->parentClass) {
+                    $fullyQualifiedParentClassName = $this->classArrs[$i]['fullyQualifiedClassName'];
+                    break;
                 }
+            }
 
             if (!isset($fullyQualifiedParentClassName)) {
                 try {
                     $fullyQualifiedParentClassName = (new ReflectionClass($this->namespace . '\\' . $this->parentClass))->getName();
-                } catch (Exception $e) {}
+                } catch (Exception $e) {
+                    return $this;
+                }
             }
             
             //parent::

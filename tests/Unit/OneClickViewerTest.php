@@ -307,6 +307,11 @@ class OneClickViewerTest extends TestCase
         }
     }
 
+    public function testGetDirUri()
+    {
+        $this->assertSame($this->viewer->getDirUri(), 'C:/xampp/htdocs/TestPHP/MyApp/one-click-viewer/tests/Stubs');
+    }
+
     public function testInputInvalidClassName()
     {
         $viewer = new OneClickViewer(ROOT . '/.env', 'invalid\class');
@@ -335,19 +340,19 @@ class OneClickViewerTest extends TestCase
 
     public function testInputPath()
     {
-        $viewer = new OneClickViewer(ROOT . '/.env', ROOT . '/tests/Stubs/TestClass.php');
+        $viewer = new OneClickViewer(str_replace('\\', '/', ROOT) . '/.env', ROOT . '/tests/Stubs/TestClass.php');
         $viewer->setHtml();
         $code = $viewer->getHtml();
-        var_dump($code);
+        
         preg_match(
-            '/' . preg_quote($this->class) . '" role="link">' . $this->class . '</',
+            '/' . preg_quote($this->parentClass) . '" role="link">' . preg_quote($this->parentClass) . '</',
             $code,
             $matchReplacedString
         );
 
         $this->assertSame(
             $matchReplacedString[0],
-            $this->class . '" role="link">' . $this->class . '<'
+            $this->parentClass . '" role="link">' . $this->parentClass . '<'
         );
     }
 

@@ -3,9 +3,12 @@ namespace OneClickViewer\Tests\P;
 
 use OneClickViewer\Tests\Contract\ParentContract;
 use OneClickViewer\Tests\P\Abs\AbstractParent;
+use OneClickViewer\Tests\Tr\ParentTrait;
 
 class ParentA extends AbstractParent implements ParentContract
 {
+    use ParentTrait;
+    
     /**
      * The name of this class.
      * 

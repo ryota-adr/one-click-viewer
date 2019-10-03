@@ -63,6 +63,8 @@ class TestClass extends ParentA implements InterfaceA, InterfaceB
         $int = random_int(0, 1);
         $array = array_merge([], []);
         $datatime = new \DateTime('2000-01-01');
+        $noNamespaceTestClass = new No_Namespace_TestClass;
+        $someClassName = $this->getSomeClassName();
     }
 
     /**

@@ -1,5 +1,8 @@
 {
     "autoload": {
+        "psr-0": {
+            "No_Namespace_": "NoNamespaceStubs"
+        },
         "psr-4": {
             "OneClickViewer\\Tests\\": "Stubs/"
         }

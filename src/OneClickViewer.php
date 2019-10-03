@@ -628,55 +628,6 @@ BODY;
     }
 
     /**
-     * Replace declared methods.
-     *
-     * return $this
-     */
-    protected function replaceDeclaredMethods()
-    {
-        preg_match_all('/(public|protected|private) (static )?function(.+?\);|[\s\S]+?^ {4}})/m', $this->code, $matchMethodsStr);
-
-        if (isset($matchMethodsStr[0])) {
-            $methodsStr = $matchMethodsStr[0];
-
-            foreach ($methodsStr as $methodStr) {
-                preg_match_all('/\\\?([A-Z][a-z]+\\\?)+/', $methodStr, $matchMethodClasses);
-                $methodClasses = array_unique($matchMethodClasses[0]);
-                $idx = array_search($this->currentClass, $methodClasses);
-                if ($idx !== false) {
-                    array_splice($methodClasses, $idx, 1);
-                }
-
-                $replaceMethod = $methodStr;
-                foreach ($methodClasses as $methodClass) {
-                    if (isset($this->classArrs[$methodClass])) {
-                        $class = $this->classArrs[$methodClass];
-                        $replaceMethod = preg_replace(
-                            '/(?<![\w\\\])' . $methodClass . '( |\(|\)|,|\]|;|::|[\r\n])/',
-                            '<a href="' . APP_HOST . "/?q=$class\" role=\"link\">$methodClass</a>$1",
-                            $replaceMethod
-                        );
-                    } else {
-                        try {
-                            $methodClassWithNamespace = $this->namespace . '\\' . trim($methodClass, '\\');
-                            if ((new ReflectionClass($methodClassWithNamespace))->getFileName()) {
-                                $replaceMethod = preg_replace(
-                                    '/(?<![\w\\\])' . preg_quote($methodClass) . '( |\(|\)|,|\]|;|::|[\r\n])/',
-                                    '<a href="' . APP_HOST . "/?q=$methodClassWithNamespace\" role=\"link\">$methodClass</a>$1",
-                                    $replaceMethod);
-
-                                $this->classArrs[trim($methodClass, '\\')] = $methodClassWithNamespace;
-                            }
-                        } catch (Exception $e) {}
-                    }
-                }
-                $this->code = str_replace($methodStr, $replaceMethod, $this->code);
-            }
-        }
-        return $this;
-    }
-
-    /**
      * Add <span id="delaredName"> </span> above documentations or declarations.
      *
      * return $this

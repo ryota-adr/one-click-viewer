@@ -97,7 +97,7 @@ class OneClickViewerTest extends TestCase
 
     public static function setUpBeforeClass(): void
     {
-        define('ROOT', dirname(dirname(__DIR__)));
+        define('ROOT', str_replace('\\', '/', dirname(dirname(__DIR__))));
 
         if (file_exists(ROOT . '/defines.php')) {
             require(ROOT . '/defines.php');
@@ -313,7 +313,7 @@ class OneClickViewerTest extends TestCase
 
     public function testGetDirUri()
     {
-        $this->assertSame($this->viewer->getDirUri(), 'C:/xampp/htdocs/TestPHP/MyApp/one-click-viewer/tests/Stubs');
+        $this->assertSame($this->viewer->getDirUri(), ROOT . '/tests/Stubs');
     }
 
     public function testInputInvalidClassName()

@@ -3,9 +3,7 @@
 [![Build Status](https://travis-ci.org/ryota-adr/one-click-viewer.svg?branch=master)](https://travis-ci.org/ryota-adr/one-click-viewer)
 [![codecov](https://codecov.io/gh/ryota-adr/one-click-viewer/branch/master/graph/badge.svg)](https://codecov.io/gh/ryota-adr/one-click-viewer)
 
-<div style="border: solid 1px black">
 ![sample](https://github.com/ryota-adr/one-click-viewer/blob/master/one-click-viewer.gif)
-</div>
 
 ## 説明
 1クリックで外部クラスのコードを表示できるPHPコードビューワー

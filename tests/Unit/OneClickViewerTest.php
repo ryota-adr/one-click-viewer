@@ -99,7 +99,11 @@ class OneClickViewerTest extends TestCase
     {
         define('ROOT', dirname(dirname(__DIR__)));
 
-        require(ROOT . '/defines.php');
+        if (file_exists(ROOT . '/defines.php')) {
+            require(ROOT . '/defines.php');
+        } else {
+            define('APP_HOST', 'http://one-click-viewer.com');
+        }
         require(ROOT . '/src/OneClickViewer.php');
         require(ROOT . '/src/helpers.php');
         require(ROOT . '/tests/vendor/autoload.php');

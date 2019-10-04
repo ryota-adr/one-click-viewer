@@ -7,8 +7,8 @@ install:
   - travis_retry composer install --no-interaction --prefer-dist --no-suggest
 
 script:
-  php dotenv-generator.php
-  ./vendor/bin/phpunit --coverage-clover clover.xml
+  - php dotenv-generator.php
+  - ./vendor/bin/phpunit --coverage-clover clover.xml
 
 after_success:
   - bash <(curl -s https://codecov.io/bash) -cF php

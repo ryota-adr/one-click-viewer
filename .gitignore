@@ -12,3 +12,4 @@ icon.jpg
 .phpunit.result.cache
 defines.php
 out.html
+node_modules

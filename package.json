@@ -1,0 +1,32 @@
+{
+  "name": "one-click-viewer",
+  "version": "1.0.0",
+  "description": "PHP code viewer",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "webpack-cli": "^3.3.9",
+    "webpack": "^4.41.0"
+  },
+  "devDependencies": {
+    "css-loader": "^3.2.0",
+    "node-sass": "^4.12.0",
+    "sass-loader": "^8.0.0",
+    "style-loader": "^1.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryota-adr/one-click-viewer.git"
+  },
+  "author": "ryota-adr",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ryota-adr/one-click-viewer/issues"
+  },
+  "homepage": "https://github.com/ryota-adr/one-click-viewer#readme"
+}

@@ -10,7 +10,7 @@ $viewer->setHtml();
 <head>
     <meta charset="utf-8">
     <title>One Click Viewer</title>
-    <link rel="stylesheet" href="src/css/style.css">
+    <link rel="stylesheet" href="src/dist/style.css">
     <link rel="stylesheet" href="src/css/icomoon/style.css">
 </head>
 <body>

@@ -1,0 +1,99 @@
+$default_font_size: 20px;
+$default-font-family: Arial, Helvetica, sans-serif;
+$link_color: #515151;
+$show_button_width: 80px;
+$toggle_button_width: 35px;
+
+body, table, div, span {
+    color: $link_color;
+    font-size: $default_font_size;
+    font-family: $default-font-family;
+}
+
+input {
+    font-size: $default_font_size;
+    padding-left: 5px;
+    width: 100%;
+}
+
+button {
+    font-size: $default_font_size;
+}
+
+table {
+    border-spacing: 0px;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+td {
+    vertical-align: top;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.search_bar {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+}
+
+.show_button {
+    width: $show_button_width;
+}
+
+.toggle_button {
+    width: $toggle_button_width;
+}
+
+.container {
+    margin-top: 40px;
+}
+
+.num {
+    display: block;
+    text-align: center;
+    margin-right: 5px;
+    user-select: none;
+}
+
+.dir {
+    margin-bottom: 20px;
+}
+
+.dir:hover {
+    background-color: #eaedf9;
+    color: #191919;
+    cursor: pointer;
+}
+
+div.toggle {
+    margin-bottom: 20px;
+}
+
+span.toggle {
+    cursor: pointer;
+}
+
+div.phpfiles {
+    margin-bottom: 20px;
+}
+
+.flex {
+    display: flex!important;
+}
+
+.inline-block {
+    display: inline-block!important;
+}
+
+.none {
+    display: none!important;
+}
+
+.width100 {
+    width: 100%!important;
+}

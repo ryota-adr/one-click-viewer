@@ -2,7 +2,6 @@
   "name": "one-click-viewer",
   "version": "1.0.0",
   "description": "PHP code viewer",
-  "main": "index.js",
   "directories": {
     "test": "tests"
   },

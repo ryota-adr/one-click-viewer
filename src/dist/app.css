@@ -72,3 +72,33 @@ div.phpfiles {
 .width100 {
   width: 100% !important; }
 
+@font-face {
+  font-family: 'icomoon';
+  src: url(d4967c4d9b03187e8c731dd7adb09eb3.eot);
+  src: url(d4967c4d9b03187e8c731dd7adb09eb3.eot#iefix) format("embedded-opentype"), url(4c7e39d32c5d3172c7a0e9c67763cb1a.ttf) format("truetype"), url(e62c1ecdce83fad77bc9b38c553bb263.woff) format("woff"), url(80626c6f5b5d280ac29868a94482acd7.svg#icomoon) format("svg");
+  font-weight: normal;
+  font-style: normal;
+  font-display: block; }
+
+[class^="icon-"], [class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'icomoon' !important;
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale; }
+
+.icon-chevron-left:before {
+  content: "\f053"; }
+
+.icon-chevron-right:before {
+  content: "\f054"; }
+
+.icon-chevron-down:before {
+  content: "\f078"; }
+

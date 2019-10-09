@@ -10,13 +10,13 @@ module.exports = {
     output: {
         path: path.resolve(__dirname, 'src/dist'),
     },
+    resolve: {
+        modules: [path.resolve(__dirname, "src/css/icomoon/fonts"), "node_modules"]
+    },
     module: {
         rules: [
             {
                 test: /\.scss$/,
-                include: [
-                    path.resolve(__dirname, 'src/css/icomoon/fonts'),
-                ],
                 use: [
                     { loader: MiniCssExtractPlugin.loader },
                     { loader: 'css-loader' },
@@ -26,20 +26,15 @@ module.exports = {
             {
                 test: /\.css$/,
                 loader: "css-loader"
-            },
-            {test: /\.(woff|woff2|eot|ttf|svg)$/,loader: 'url-loader?limit=100000'},
-            {
-                test: /\.woff(2)?(\?[a-z0-9]+)?$/,
-                loader: "url-loader?limit=10000&mimetype=application/font-woff"
             },{
-                test: /\.(ttf|eot|svg)(\?[a-z0-9]+)?$/,
+                test: /\.(ttf|eot|svg|woff)(\?[a-z0-9]+)?$/,
                 use: [{
                     loader: 'file-loader',
                 }]
             }
         ]
     },
-    plugins: [/*
+    plugins: [
         new CopyPlugin([
             {
                 from: 'src/css/icomoon/fonts/icomoon.eot',
@@ -57,11 +52,29 @@ module.exports = {
                 from: 'src/css/icomoon/fonts/icomoon.woff',
                 to: 'fonts/icomoon.woff'
             }
-        ]),*/
+        ]),
+        new CopyPlugin([
+            {
+                from: 'src/css/icomoon/fonts/icomoon.eot',
+                to: '../scss/fonts/icomoon.eot'
+            },
+            {
+                from: 'src/css/icomoon/fonts/icomoon.svg',
+                to: '../scss/fonts/icomoon.svg'
+            },
+            {
+                from: 'src/css/icomoon/fonts/icomoon.ttf',
+                to: '../scss/fonts/icomoon.ttf'
+            },
+            {
+                from: 'src/css/icomoon/fonts/icomoon.woff',
+                to: '../scss/fonts/icomoon.woff'
+            }
+        ]),
         new MiniCssExtractPlugin({filename: 'app.css'}),
     ],
     optimization: {
         minimizer: [new OptimizeCSSAssetsPlugin({})],
     },
-
+    stats: 'verbose'
 }

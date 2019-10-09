@@ -11,7 +11,6 @@ $viewer->setHtml();
     <meta charset="utf-8">
     <title>One Click Viewer</title>
     <link rel="stylesheet" href="src/dist/app.css">
-    <link rel="stylesheet" href="src/css/icomoon/style.css">
 </head>
 <body>
     <div class="search_bar">

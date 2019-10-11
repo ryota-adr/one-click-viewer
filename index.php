@@ -36,7 +36,7 @@ $viewer->setHtml();
         <?php $viewer->output(); ?>
     </div>
     <div>
-        <script type="text/javascript" src="src/js/script.js"></script>
+        <!--<script type="text/javascript" src="src/js/script.js"></script>-->
         <script type="text/javascript" src="src/dist/app.js"></script>
     </div>
 </body>

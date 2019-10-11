@@ -30,6 +30,11 @@ td {
     vertical-align: top;
 }
 
+a {
+    color: $link_color;
+    text-decoration: none;
+}
+
 a:hover {
     text-decoration: underline;
 }

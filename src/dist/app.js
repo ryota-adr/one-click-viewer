@@ -94,7 +94,7 @@
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-eval("\r\nconsole.log('ts');\r\n\n\n//# sourceURL=webpack:///./src/ts/app.ts?");
+eval("\r\n(function () {\r\n    const dir = document.querySelector('.dir');\r\n    dir.addEventListener('click', function () {\r\n        const copyFrom = document.createElement('textarea');\r\n        copyFrom.textContent = dir.dataset.dir;\r\n        const bodyElement = document.getElementsByTagName('body')[0];\r\n        bodyElement.appendChild(copyFrom);\r\n        copyFrom.select();\r\n        document.execCommand('copy');\r\n        bodyElement.removeChild(copyFrom);\r\n        window.open();\r\n    });\r\n})();\r\n\n\n//# sourceURL=webpack:///./src/ts/app.ts?");
 
 /***/ })
 

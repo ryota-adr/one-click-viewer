@@ -42,10 +42,11 @@
             });
 
             if (!targetedElements.includes(targetElement)) {
+                targetedElements.splice(0, 1);
                 targetedElements.push(targetElement);
             }
 
-            targetElement.style.backgroundColor = '"#e2e6ff';
+            targetElement.style.backgroundColor = '#e2e6ff';
             targetElement.style.color = '#191919';
         }
     }
@@ -59,11 +60,14 @@
     links.forEach(function (link) {
         link.addEventListener('mouseup', function (event) {
             if ((event as MouseEvent).which === 1 || (event as MouseEvent).which === 2) {
-                (link as HTMLElement).style.backgroundColor = '';
-                (link as HTMLElement).style.color = '';
+                pressedLinks.forEach(function (pressedLink) {
+                    pressedLink.style.backgroundColor = '';
+                    pressedLink.style.color = '';
+                });
             }
 
             if (!pressedLinks.includes((link as HTMLElement))) {
+                pressedLinks.splice(0, 1);
                 pressedLinks.push((link as HTMLElement));
             }
 
@@ -74,6 +78,7 @@
 
     const toggleButton: HTMLElement = <HTMLElement>document.querySelector('button[role="toggle_input_text"]');
     const inputTextAndButton: HTMLElement = <HTMLElement>document.querySelector('div[role="input_text_and_button"]');
+    
     function toggleInputTextAndButton(event: Event) {
         if (inputTextAndButton.classList.contains('none')) {
             inputTextAndButton.classList.remove('none');
